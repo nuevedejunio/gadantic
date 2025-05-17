@@ -1,0 +1,6 @@
+*               text=auto
+*.java          text diff=java
+*.class         binary
+*.jar           binary
+mvnw            text eol=lf
+*.cmd           text eol=crlf
