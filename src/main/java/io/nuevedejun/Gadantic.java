@@ -31,7 +31,7 @@ public class Gadantic {
         .limit(100)
         .collect(EvolutionResult.toBestGenotype());
 
-    System.out.println("Hello World:\n" + result);
+    log.info("Hello World:\n{}", result);
   }
 
   double fitness(final Genotype<IntegerGene> genotype) {
