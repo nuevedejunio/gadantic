@@ -1,7 +1,6 @@
 package io.nuevedejun;
 
 import io.jenetics.Genotype;
-import io.jenetics.IntegerChromosome;
 import io.jenetics.IntegerGene;
 import io.jenetics.engine.Engine;
 import io.jenetics.engine.EvolutionResult;
@@ -15,15 +14,12 @@ public class Gadantic {
   }
 
   void run() {
-    final var genotype = Genotype.of(
-        /* perk */ IntegerChromosome.of(0, 5, 9 * 9),
-        /* area */ IntegerChromosome.of(0, 6, 9 * 9),
-        /* kind */ IntegerChromosome.of(0, 6, 9 * 9));
-
+    final var plot = new PlotPhenotype();
+    final var genotype = plot.genotype();
     final var constraint = new PlotConstraint();
 
     final var engine = Engine
-        .builder(this::fitness, constraint.constrain(genotype))
+        .builder(plot::fitness, constraint.constrain(genotype))
         .constraint(constraint)
         .build();
 
@@ -32,9 +28,5 @@ public class Gadantic {
         .collect(EvolutionResult.toBestGenotype());
 
     log.info("Hello World:\n{}", result);
-  }
-
-  double fitness(final Genotype<IntegerGene> genotype) {
-    return 0;
   }
 }
