@@ -182,10 +182,8 @@ public class PlotPhenotype {
         .collect(Collectors.toMap(Border::character, Function.identity())));
 
     static Border from(char c) {
-      if (log.isDebugEnabled()) {
-        log.debug("Border.from('{}' [])", c, Character.codePointAt(new char[] { c }, 0));
-      }
-      return MAP.get(c);
+      log.entry((int) c);
+      return log.exit(MAP.get(c));
     }
   }
 
