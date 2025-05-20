@@ -1,5 +1,7 @@
 package io.nuevedejun;
 
+import java.util.function.Function;
+
 import io.jenetics.Genotype;
 import io.jenetics.IntegerGene;
 import io.jenetics.engine.Engine;
@@ -15,7 +17,13 @@ public class Gadantic {
   }
 
   void run() {
-    final var plot = new PlotPhenotype();
+    final var plot = new PlotPhenotype(
+        property("gadantic.fitness.water", Double::parseDouble, 1.0),
+        property("gadantic.fitness.weed", Double::parseDouble, 1.0),
+        property("gadantic.fitness.quality", Double::parseDouble, 0.0),
+        property("gadantic.fitness.harvest", Double::parseDouble, 0.5),
+        property("gadantic.fitness.distinct", Double::parseDouble, 1.0));
+
     final var genotype = plot.genotype();
     final var constraint = new PlotConstraint();
 
@@ -24,10 +32,23 @@ public class Gadantic {
         .constraint(constraint)
         .build();
 
+    log.info("Starting evolution...");
+    final int generations = property("gadantic.generations", Integer::parseInt, 100);
     final Genotype<IntegerGene> result = engine.stream()
-        .limit(100)
+        .limit(generations)
         .collect(EvolutionResult.toBestGenotype());
 
     log.info("Plot:\n{}", Plot.decode(result).str());
+  }
+
+  private static <T> T property(final String name, final Function<String, T> mapper, final T defaultValue) {
+    final String got = System.getProperty(name);
+    if (got == null) {
+      log.info("Property {}: {} (default)", name, defaultValue);
+      return defaultValue;
+    } else {
+      log.info("Property {}: {}", name, got);
+      return mapper.apply(got);
+    }
   }
 }

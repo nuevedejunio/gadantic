@@ -38,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.XSlf4j;
 
+@RequiredArgsConstructor
 @XSlf4j
 public class PlotPhenotype {
 
@@ -201,8 +202,9 @@ public class PlotPhenotype {
           harvest += crop.crop().size() * crop.crop().size();
         }
       }
+      final int distinct = set.stream().map(RichCrop::crop).collect(Collectors.toSet()).size();
       final String layoutUrl = createLayoutUrl(array);
-      return new Plot(Set.of(set.toArray(new RichCrop[0])), water, weed, quality, harvest, layoutUrl);
+      return new Plot(Set.of(set.toArray(new RichCrop[0])), water, weed, quality, harvest, distinct, layoutUrl);
     }
 
     private static String createLayoutUrl(final RichCrop[][] array) {
@@ -352,6 +354,7 @@ public class PlotPhenotype {
     private final int weed;
     private final int quality;
     private final int harvest;
+    private final int distinct;
     private final String layoutUrl;
 
     public String str() {
@@ -380,12 +383,12 @@ public class PlotPhenotype {
       drawVertical(sb, root + 2 * LINE_LEN - 2, LINES - 2);
       // draw lower border
       drawHorizontal(sb, root + 1 + (LINES - 1) * LINE_LEN, LINE_LEN - 3);
-      sb.append(crops.size()).append(" crops\n");
-      sb.append(water).append("(").append(100 * water / 81).append("%) water   ");
-      sb.append(weed).append("(").append(100 * weed / 81).append("%) weed   ");
-      sb.append(quality).append("(").append(100 * quality / 81).append("%) quality   ");
-      sb.append(harvest).append("(").append(100 * harvest / 81).append("%) harvest\n");
-      sb.append("Garden Planner: ").append(layoutUrl).append('\n');
+      sb.append(crops.size()).append(" crops; ").append(distinct).append(" distinct\n");
+      sb.append(water).append(" (").append(100 * water / 81).append("%) water; ");
+      sb.append(weed).append(" (").append(100 * weed / 81).append("%) weed; ");
+      sb.append(quality).append(" (").append(100 * quality / 81).append("%) quality; ");
+      sb.append(harvest).append(" (").append(100 * harvest / 81).append("%) harvest\n");
+      sb.append("Open in Garden Planner: ").append(layoutUrl).append('\n');
       return sb.toString();
     }
   }
@@ -465,15 +468,25 @@ public class PlotPhenotype {
     };
   }
 
-  Genotype<IntegerGene> genotype() {
+  private final double waterCf;
+  private final double weedCf;
+  private final double qualityCf;
+  private final double harvestCf;
+  private final double distinctCf;
+
+  public Genotype<IntegerGene> genotype() {
     return Genotype.of(
         /* perk */ IntegerChromosome.of(0, 5, 9 * 9),
         /* area */ IntegerChromosome.of(0, 6, 9 * 9),
         /* kind */ IntegerChromosome.of(0, 6, 9 * 9));
   }
 
-  double fitness(final Genotype<IntegerGene> genotype) {
+  public double fitness(final Genotype<IntegerGene> genotype) {
     final Plot plot = Plot.decode(genotype);
-    return 0;
+    return waterCf * plot.water() / 81.0
+        + weedCf * plot.weed() / 81.0
+        + qualityCf * plot.quality() / 81.0
+        + harvestCf * plot.harvest() / 81.0
+        + distinctCf * plot.distinct() / Crop.values().length;
   }
 }
