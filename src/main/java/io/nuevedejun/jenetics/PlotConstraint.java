@@ -137,6 +137,7 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
     while (invalidCropTile(matrix, square.withSize(valid))) {
       valid--;
     }
+    fillMatrix(matrix, square.withSize(valid));
     return valid;
   }
 }

@@ -23,7 +23,7 @@
       <artifactId>jenetics</artifactId>
       <version>8.2.0</version>
     </dependency>
-    
+
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -33,7 +33,7 @@
 
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
+      <artifactId>slf4j-ext</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
 

@@ -4,10 +4,11 @@ import io.jenetics.Genotype;
 import io.jenetics.IntegerGene;
 import io.jenetics.engine.Engine;
 import io.jenetics.engine.EvolutionResult;
+import io.nuevedejun.PlotPhenotype.Plot;
 import io.nuevedejun.jenetics.PlotConstraint;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.XSlf4j;
 
-@Slf4j
+@XSlf4j
 public class Gadantic {
   public static void main(final String[] args) {
     new Gadantic().run();
@@ -27,6 +28,6 @@ public class Gadantic {
         .limit(100)
         .collect(EvolutionResult.toBestGenotype());
 
-    log.info("Hello World:\n{}", result);
+    log.info("Plot:\n{}", Plot.decode(result).str());
   }
 }
