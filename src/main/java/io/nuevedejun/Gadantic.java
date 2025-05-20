@@ -6,14 +6,24 @@ import io.jenetics.Genotype;
 import io.jenetics.IntegerGene;
 import io.jenetics.engine.Engine;
 import io.jenetics.engine.EvolutionResult;
-import io.nuevedejun.PlotPhenotype.Plot;
-import io.nuevedejun.jenetics.PlotConstraint;
 import lombok.extern.slf4j.XSlf4j;
 
 @XSlf4j
-public class Gadantic {
+class Gadantic {
+
   public static void main(final String[] args) {
     new Gadantic().run();
+  }
+
+  <T> T property(final String name, final Function<String, T> mapper, final T defaultValue) {
+    final String got = System.getProperty(name);
+    if (got == null) {
+      log.info("Property {}: {} (default)", name, defaultValue);
+      return defaultValue;
+    } else {
+      log.info("Property {}: {}", name, got);
+      return mapper.apply(got);
+    }
   }
 
   void run() {
@@ -39,16 +49,5 @@ public class Gadantic {
         .collect(EvolutionResult.toBestGenotype());
 
     log.info("Plot:\n{}", Plot.decode(result).str());
-  }
-
-  private static <T> T property(final String name, final Function<String, T> mapper, final T defaultValue) {
-    final String got = System.getProperty(name);
-    if (got == null) {
-      log.info("Property {}: {} (default)", name, defaultValue);
-      return defaultValue;
-    } else {
-      log.info("Property {}: {}", name, got);
-      return mapper.apply(got);
-    }
   }
 }

@@ -1,4 +1,4 @@
-package io.nuevedejun.jenetics;
+package io.nuevedejun;
 
 import static java.lang.Math.min;
 
@@ -14,15 +14,15 @@ import io.jenetics.engine.Constraint;
 import io.nuevedejun.PlotPhenotype.CropDecoder;
 import io.nuevedejun.PlotPhenotype.TiledCrop;
 
-public class PlotConstraint implements Constraint<IntegerGene, Double> {
+class PlotConstraint implements Constraint<IntegerGene, Double> {
 
   record Square(int x0, int x1, int y0, int y1, int size) {
     Square(final int x, final int y, final int size) {
       this(x, x + size, y, y + size, size);
     }
 
-    public static Square of(final TiledCrop tile) {
-      return new Square(tile.x(), tile.y(), tile.crop().size());
+    static Square of(final TiledCrop tile) {
+      return new Square(tile.x(), tile.y(), tile.crop().size);
     }
 
     /**
@@ -32,7 +32,7 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
      * @param size the length of the sides of the new square
      * @return a new {@code Square} with the same origin and the given size
      */
-    public Square withSize(final int size) {
+    Square withSize(final int size) {
       return new Square(x0, y0, size);
     }
 
@@ -44,7 +44,7 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
      * @return {@code true} if the given square is entirely within the bounds;
      *         {@code false} otherwise
      */
-    public boolean contains(final Square square) {
+    boolean contains(final Square square) {
       return square.x0() >= x0 && square.y0() >= y0
           && square.x1() <= x1 && square.y1() <= y1;
     }
@@ -77,10 +77,10 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
       final Square square = Square.of(tile);
       final int valid = validCropSize(matrix, square);
 
-      if (valid < tile.crop().size()) {
+      if (valid < tile.crop().size) {
         int decreasing = tile.area() - 1;
         final CropDecoder cropDecoder = tile.decoder();
-        while (cropDecoder.get(decreasing, tile.kind()).size() > valid) {
+        while (cropDecoder.get(decreasing, tile.kind()).size > valid) {
           decreasing--;
         }
         changes.add(new IntArrayValue(tile.x() * 9 + tile.y(), decreasing));
@@ -124,13 +124,13 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
    * @param matrix the matrix to fill
    * @param target the square to fill with
    */
-  private void fillMatrix(final Square[][] matrix, final Square target) {
+  void fillMatrix(final Square[][] matrix, final Square target) {
     for (int i = target.x0(); i < target.x1(); i++) {
       Arrays.fill(matrix[i], target.y0(), target.y1(), target);
     }
   }
 
-  private int validCropSize(final Square[][] matrix, final Square square) {
+  int validCropSize(final Square[][] matrix, final Square square) {
     final int remainRight = 9 - square.x0();
     final int remainDown = 9 - square.y0();
     int valid = min(square.size(), min(remainRight, remainDown));
