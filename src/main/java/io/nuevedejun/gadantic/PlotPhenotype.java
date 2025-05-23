@@ -1,9 +1,9 @@
-package io.nuevedejun;
+package io.nuevedejun.gadantic;
 
-import static io.nuevedejun.PlotPhenotype.Perk.HARVEST;
-import static io.nuevedejun.PlotPhenotype.Perk.QUALITY;
-import static io.nuevedejun.PlotPhenotype.Perk.WATER;
-import static io.nuevedejun.PlotPhenotype.Perk.WEED;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.HARVEST;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,9 +98,9 @@ class PlotPhenotype {
         public TiledCrop next() {
           final var coordinate = inner.next();
 
-          final int perk = perkChromosome.get(coordinate.x() * 9 + coordinate.y()).allele();
-          final int area = areaChromosome.get(coordinate.x() * 9 + coordinate.y()).allele();
-          final int kind = kindChromosome.get(coordinate.x() * 9 + coordinate.y()).allele();
+          final int perk = perkChromosome.get(9 * coordinate.y() + coordinate.x()).allele();
+          final int area = areaChromosome.get(9 * coordinate.y() + coordinate.x()).allele();
+          final int kind = kindChromosome.get(9 * coordinate.y() + coordinate.x()).allele();
 
           final CropDecoder cropDecoder = CropDecoder.ofPerk(perk);
           final Crop crop = cropDecoder.get(area, kind);

@@ -1,21 +1,21 @@
-package io.nuevedejun;
+package io.nuevedejun.gadantic;
 
-import static io.nuevedejun.PlotPhenotype.Border.BLANK;
-import static io.nuevedejun.PlotPhenotype.Border.CROSS;
-import static io.nuevedejun.PlotPhenotype.Border.DASH;
-import static io.nuevedejun.PlotPhenotype.Border.LEFT_T;
-import static io.nuevedejun.PlotPhenotype.Border.LOWER_LEFT;
-import static io.nuevedejun.PlotPhenotype.Border.LOWER_RIGHT;
-import static io.nuevedejun.PlotPhenotype.Border.LOWER_T;
-import static io.nuevedejun.PlotPhenotype.Border.PIPE;
-import static io.nuevedejun.PlotPhenotype.Border.RIGHT_T;
-import static io.nuevedejun.PlotPhenotype.Border.UPPER_LEFT;
-import static io.nuevedejun.PlotPhenotype.Border.UPPER_RIGHT;
-import static io.nuevedejun.PlotPhenotype.Border.UPPER_T;
-import static io.nuevedejun.PlotPhenotype.Perk.HARVEST;
-import static io.nuevedejun.PlotPhenotype.Perk.QUALITY;
-import static io.nuevedejun.PlotPhenotype.Perk.WATER;
-import static io.nuevedejun.PlotPhenotype.Perk.WEED;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.BLANK;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.CROSS;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.DASH;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.LEFT_T;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.LOWER_LEFT;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.LOWER_RIGHT;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.LOWER_T;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.PIPE;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.RIGHT_T;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.UPPER_LEFT;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.UPPER_RIGHT;
+import static io.nuevedejun.gadantic.PlotPhenotype.Border.UPPER_T;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.HARVEST;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
 
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -25,20 +25,25 @@ import java.util.stream.Collectors;
 
 import io.jenetics.Genotype;
 import io.jenetics.IntegerGene;
-import io.nuevedejun.PlotPhenotype.Border;
-import io.nuevedejun.PlotPhenotype.Crop;
-import io.nuevedejun.PlotPhenotype.Perk;
-import io.nuevedejun.PlotPhenotype.TiledCrop;
+import io.nuevedejun.gadantic.PlotPhenotype.Border;
+import io.nuevedejun.gadantic.PlotPhenotype.Crop;
+import io.nuevedejun.gadantic.PlotPhenotype.Perk;
+import io.nuevedejun.gadantic.PlotPhenotype.TiledCrop;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.XSlf4j;
 
 @RequiredArgsConstructor
+@XSlf4j
 class Plot {
   @RequiredArgsConstructor
+  @ToString
   static class RichCrop {
     final Crop crop;
     final int x;
     final int y;
 
+    @ToString.Exclude
     final Map<Perk, Integer> perks = new EnumMap<>(Map.of(
         WATER, 0,
         WEED, 0,
@@ -79,6 +84,8 @@ class Plot {
         set.add(array[i][j]);
       }
     }
+    log.trace("Set of decoded crops is: {}", set);
+
     int water = 0;
     int weed = 0;
     int quality = 0;
@@ -254,13 +261,14 @@ class Plot {
 
   String str() {
     final StringBuilder sb = new StringBuilder();
-
-    final int root = sb.length();
     for (int i = 0; i < LINES; i++) {
+      // reserve space for the table
       sb.repeat(BLANK.character, LINE_LEN - 1).append('\n');
     }
     for (final var annotated : crops) {
-      final int start = root + annotated.x * CELL_WIDTH + 2 * annotated.y * LINE_LEN;
+      log.trace("Drawing cell of {}", annotated);
+
+      final int start = annotated.x * CELL_WIDTH + 2 * annotated.y * LINE_LEN;
       final Crop crop = annotated.crop;
       drawCell(sb, start, crop.size);
 
@@ -275,9 +283,14 @@ class Plot {
       replace(sb, start + LINE_LEN + 1, text);
     }
     // draw left border
-    drawVertical(sb, root + 2 * LINE_LEN - 2, LINES - 2);
+    drawVertical(sb, 2 * LINE_LEN - 2, LINES - 2);
     // draw lower border
-    drawHorizontal(sb, root + 1 + (LINES - 1) * LINE_LEN, LINE_LEN - 3);
+    drawHorizontal(sb, 1 + (LINES - 1) * LINE_LEN, LINE_LEN - 3);
+
+    sb.append(HAS_WATER).append(" water; ");
+    sb.append(HAS_WEED).append(" weed; ");
+    sb.append(HAS_QUALITY).append(" quality; ");
+    sb.append(HAS_HARVEST).append(" harvest\n");
     sb.append(crops.size()).append(" crops; ").append(distinct).append(" distinct\n");
     sb.append(water).append(" (").append(100 * water / 81).append("%) water; ");
     sb.append(weed).append(" (").append(100 * weed / 81).append("%) weed; ");

@@ -1,4 +1,4 @@
-package io.nuevedejun;
+package io.nuevedejun.gadantic;
 
 import java.util.function.Function;
 
@@ -12,7 +12,12 @@ import lombok.extern.slf4j.XSlf4j;
 class Gadantic {
 
   public static void main(final String[] args) {
-    new Gadantic().run();
+    try {
+      new Gadantic().run();
+    } catch (Exception e) {
+      log.error("The application threw an uncaught exception", e);
+      System.exit(1);
+    }
   }
 
   <T> T property(final String name, final Function<String, T> mapper, final T defaultValue) {
