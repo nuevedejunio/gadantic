@@ -1,9 +1,14 @@
 package io.nuevedejun.gadantic;
 
-import static io.nuevedejun.gadantic.PlotPhenotype.Perk.HARVEST;
-import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
-import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
-import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
+import io.jenetics.Genotype;
+import io.jenetics.IntegerGene;
+import io.nuevedejun.gadantic.PlotIterableFactory.TiledCrop;
+import io.nuevedejun.gadantic.PlotPhenotype.Crop;
+import io.nuevedejun.gadantic.PlotPhenotype.Perk;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.XSlf4j;
 
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -11,14 +16,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.jenetics.Genotype;
-import io.jenetics.IntegerGene;
-import io.nuevedejun.gadantic.GenotypeIterableFactory.TiledCrop;
-import io.nuevedejun.gadantic.PlotPhenotype.Crop;
-import io.nuevedejun.gadantic.PlotPhenotype.Perk;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-import lombok.extern.slf4j.XSlf4j;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.HARVEST;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
 
 interface PlotDecoder {
 
@@ -38,22 +39,28 @@ interface PlotDecoder {
 
     void buff(final RichCrop other) {
       if (this.crop != other.crop) {
-        other.perks.put(crop.perk, other.perks.get(crop.perk) + 1);
+        other.perks.put(crop.perk(), other.perks.get(crop.perk()) + 1);
       }
     }
 
     boolean has(final Perk perk) {
-      return perks.get(perk) >= crop.size;
+      return perks.get(perk) >= crop.size();
     }
   }
 
-  @RequiredArgsConstructor
+  Plot decode(final Genotype<IntegerGene> genotype);
+
+  static PlotDecoder standard(final PlotIterableFactory iterableFactory) {
+    return new Default(iterableFactory);
+  }
+
+  @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
   @XSlf4j
   class Default implements PlotDecoder {
-    final GenotypeIterableFactory iterableFactory;
+    final PlotIterableFactory iterableFactory;
 
     @Override
-    public Plot decode(Genotype<IntegerGene> genotype) {
+    public Plot decode(final Genotype<IntegerGene> genotype) {
       final RichCrop[][] array = new RichCrop[9][9];
       for (final var tile : iterableFactory.tiles(genotype, true)) {
         if (array[tile.x()][tile.y()] == null) {
@@ -75,16 +82,16 @@ interface PlotDecoder {
       int harvest = 0;
       for (final var crop : set) {
         if (crop.has(WATER)) {
-          water += crop.crop.size * crop.crop.size;
+          water += crop.crop.size() * crop.crop.size();
         }
         if (crop.has(WEED)) {
-          weed += crop.crop.size * crop.crop.size;
+          weed += crop.crop.size() * crop.crop.size();
         }
         if (crop.has(QUALITY)) {
-          quality += crop.crop.size * crop.crop.size;
+          quality += crop.crop.size() * crop.crop.size();
         }
         if (crop.has(HARVEST)) {
-          harvest += crop.crop.size * crop.crop.size;
+          harvest += crop.crop.size() * crop.crop.size();
         }
       }
       final int distinct = set.stream().map(r -> r.crop).collect(Collectors.toSet()).size();
@@ -94,8 +101,8 @@ interface PlotDecoder {
 
     void fillCropTile(final RichCrop[][] array, final TiledCrop tile) {
       final var rich = new RichCrop(tile.crop(), tile.x(), tile.y());
-      for (int i = 0; i < tile.crop().size; i++) {
-        for (int j = 0; j < tile.crop().size; j++) {
+      for (int i = 0; i < tile.crop().size(); i++) {
+        for (int j = 0; j < tile.crop().size(); j++) {
           array[tile.x() + i][tile.y() + j] = rich;
         }
       }
@@ -152,6 +159,4 @@ interface PlotDecoder {
       };
     }
   }
-
-  Plot decode(final Genotype<IntegerGene> genotype);
 }

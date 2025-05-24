@@ -1,17 +1,17 @@
 package io.nuevedejun.gadantic;
 
+import io.jenetics.Genotype;
+import io.jenetics.IntegerGene;
+import io.nuevedejun.gadantic.PlotPhenotype.Crop;
+import io.nuevedejun.gadantic.PlotPhenotype.Perk;
+
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.SequencedSet;
 import java.util.stream.IntStream;
 
-import io.jenetics.Genotype;
-import io.jenetics.IntegerGene;
-import io.nuevedejun.gadantic.PlotPhenotype.Crop;
-import io.nuevedejun.gadantic.PlotPhenotype.CropDecoder;
-
-public class PrioritizedIterableFactory implements GenotypeIterableFactory {
-  final LinkedHashSet<Coordinate> coordinates = IntStream.range(0, 9).boxed()
+public class PrioritizedIterableFactory implements PlotIterableFactory {
+  private final LinkedHashSet<Coordinate> coordinates = IntStream.range(0, 9).boxed()
       .flatMap(i -> IntStream.range(0, 9).mapToObj(j -> new Coordinate(i, j)))
       .collect(LinkedHashSet::new, LinkedHashSet::add, LinkedHashSet::addAll);
 
@@ -38,7 +38,7 @@ public class PrioritizedIterableFactory implements GenotypeIterableFactory {
         final int area = areaChromosome.get(index).allele();
         final int kind = kindChromosome.get(index).allele();
 
-        final CropDecoder cropDecoder = CropDecoder.ofPerk(perk);
+        final Perk cropDecoder = Perk.of(perk);
         final Crop crop = cropDecoder.get(area, kind);
 
         return new TiledCrop(coordinate, crop, perk, area, kind, cropDecoder);
@@ -55,8 +55,8 @@ public class PrioritizedIterableFactory implements GenotypeIterableFactory {
    * @throws IllegalArgumentException if any coordinate is out of the original set
    *                                  of coordinates
    */
-  void prioritize(SequencedSet<Coordinate> priority) {
-    for (var coordinate : priority.reversed()) {
+  public void prioritize(final SequencedSet<Coordinate> priority) {
+    for (final var coordinate : priority.reversed()) {
       if (!coordinates.contains(coordinate)) {
         throw new IllegalArgumentException(coordinate + " is not in the allowed coordinates");
       }

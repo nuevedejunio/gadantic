@@ -1,34 +1,33 @@
 package io.nuevedejun.gadantic;
 
-import static io.nuevedejun.gadantic.PlotConstraint.TileCheckResult.IGNORE;
-import static io.nuevedejun.gadantic.PlotConstraint.TileCheckResult.OVERRIDE;
-import static io.nuevedejun.gadantic.PlotConstraint.TileCheckResult.REJECT;
-import static java.lang.Math.min;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import io.jenetics.Genotype;
 import io.jenetics.IntegerChromosome;
 import io.jenetics.IntegerGene;
 import io.jenetics.Phenotype;
 import io.jenetics.engine.Constraint;
-import io.nuevedejun.gadantic.GenotypeIterableFactory.TiledCrop;
+import io.nuevedejun.gadantic.PlotIterableFactory.TiledCrop;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import io.nuevedejun.gadantic.PlotPhenotype.CropDecoder;
+import io.nuevedejun.gadantic.PlotPhenotype.Perk;
 import lombok.extern.slf4j.XSlf4j;
 
-@XSlf4j
-record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constraint<IntegerGene, Double> {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-  record Square(int x0, int x1, int y0, int y1, int size) {
-    Square(final int x, final int y, final int size) {
+import static java.lang.Math.min;
+
+@XSlf4j
+public record PlotConstraint(PlotIterableFactory iterableFactory)
+    implements Constraint<IntegerGene, Double> {
+
+  private record Square(int x0, int x1, int y0, int y1, int size) {
+    private Square(final int x, final int y, final int size) {
       this(x, x + size, y, y + size, size);
     }
 
-    static Square of(final TiledCrop tile) {
-      return new Square(tile.x(), tile.y(), tile.crop().size);
+    private static Square of(final TiledCrop tile) {
+      return new Square(tile.x(), tile.y(), tile.crop().size());
     }
 
     /**
@@ -38,7 +37,7 @@ record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constr
      * @param size the length of the sides of the new square
      * @return a new {@code Square} with the same origin and the given size
      */
-    Square withSize(final int size) {
+    private Square withSize(final int size) {
       return new Square(x0, y0, size);
     }
 
@@ -50,16 +49,18 @@ record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constr
      * @return {@code true} if the given square is entirely within the bounds;
      *         {@code false} otherwise
      */
-    boolean contains(final Square square) {
+    private boolean contains(final Square square) {
       return square.x0() >= x0 && square.y0() >= y0
           && square.x1() <= x1 && square.y1() <= y1;
     }
   }
 
-  record IntArrayValue(int pos, int value) {
+
+  private record IntArrayValue(int pos, int value) {
   }
 
-  enum TileCheckResult {
+
+  private enum TileCheckResult {
     OVERRIDE, REJECT, IGNORE
   }
 
@@ -102,7 +103,7 @@ record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constr
       int decreasing = tile.area();
       Crop replacement = tile.crop();
       boolean replace = false;
-      while (replacement.size > valid) {
+      while (replacement.size() > valid) {
         log.trace("Crop {} is invalid in position ({}, {}). Current [area] is {}.",
             replacement, tile.x(), tile.y(), decreasing);
         decreasing--;
@@ -134,7 +135,7 @@ record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constr
    * @param phenotype the phenotype to wrap
    * @return the wrapped phenotype
    */
-  Object pretty(final Phenotype<IntegerGene, Double> phenotype) {
+  private Object pretty(final Phenotype<IntegerGene, Double> phenotype) {
     return new Object() {
       @Override
       public String toString() {
@@ -145,7 +146,7 @@ record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constr
     };
   }
 
-  Object pretty(final Genotype<IntegerGene> genotype) {
+  private Object pretty(final Genotype<IntegerGene> genotype) {
     return new Object() {
       @Override
       public String toString() {
@@ -161,7 +162,7 @@ record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constr
             final int perk = perkChromosome.get(j * 9 + i).allele();
             final int area = areaChromosome.get(j * 9 + i).allele();
             final int kind = kindChromosome.get(j * 9 + i).allele();
-            final Crop crop = CropDecoder.ofPerk(perk).get(area, kind);
+            final Crop crop = Perk.of(perk).get(area, kind);
             sb.append(String.format("%4.4s(%d,%d,%d) ", crop, perk, area, kind));
           }
         }
@@ -170,10 +171,10 @@ record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constr
     };
   }
 
-  TileCheckResult checkCropTile(final Square[][] matrix, final Square square) {
+  private TileCheckResult checkCropTile(final Square[][] matrix, final Square square) {
     // check if the crop fits in the plot
     if (square.x1() > 9 || square.y1() > 9) {
-      return REJECT;
+      return TileCheckResult.REJECT;
     }
     // check partial overlap in crop tiles
     for (int i = square.x0(); i < square.x1(); i++) {
@@ -181,14 +182,14 @@ record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constr
         final Square current = matrix[i][j];
         if (current != null && !square.contains(current)) {
           if (current.contains(square)) {
-            return IGNORE;
+            return TileCheckResult.IGNORE;
           } else {
-            return REJECT;
+            return TileCheckResult.REJECT;
           }
         }
       }
     }
-    return OVERRIDE;
+    return TileCheckResult.OVERRIDE;
   }
 
   /**
@@ -197,13 +198,13 @@ record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constr
    * @param matrix the matrix to fill
    * @param target the square to fill with
    */
-  void fillMatrix(final Square[][] matrix, final Square target) {
+  private void fillMatrix(final Square[][] matrix, final Square target) {
     for (int i = target.x0(); i < target.x1(); i++) {
       Arrays.fill(matrix[i], target.y0(), target.y1(), target);
     }
   }
 
-  int validCropSize(final Square[][] matrix, final Square square) {
+  private int validCropSize(final Square[][] matrix, final Square square) {
     final int remainRight = 9 - square.x0();
     final int remainDown = 9 - square.y0();
     int valid = min(square.size(), min(remainRight, remainDown));
@@ -212,10 +213,10 @@ record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constr
       log.trace("Attempting to fit {}. Current [valid] is {}", square, valid);
       result = checkCropTile(matrix, square.withSize(valid));
       valid--;
-    } while (result == REJECT);
+    } while (result == TileCheckResult.REJECT);
 
     valid++; // undo last decrement
-    if (result == OVERRIDE) {
+    if (result == TileCheckResult.OVERRIDE) {
       fillMatrix(matrix, square.withSize(valid));
     }
     return valid;

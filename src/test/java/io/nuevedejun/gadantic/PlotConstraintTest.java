@@ -1,9 +1,13 @@
 package io.nuevedejun.gadantic;
 
-import static java.util.Collections.emptySortedSet;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.params.provider.Arguments.argumentSet;
+import io.jenetics.Genotype;
+import io.jenetics.IntegerChromosome;
+import io.jenetics.IntegerGene;
+import io.jenetics.Phenotype;
+import io.nuevedejun.gadantic.PlotIterableFactory.Coordinate;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -11,15 +15,10 @@ import java.util.SequencedSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import io.jenetics.Genotype;
-import io.jenetics.IntegerChromosome;
-import io.jenetics.IntegerGene;
-import io.jenetics.Phenotype;
-import io.nuevedejun.gadantic.GenotypeIterableFactory.Coordinate;
+import static java.util.Collections.emptySortedSet;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.params.provider.Arguments.argumentSet;
 
 class PlotConstraintTest {
 
@@ -28,7 +27,7 @@ class PlotConstraintTest {
   final PlotConstraint constraint = new PlotConstraint(iterableFactory);
 
   static List<Arguments> repairTestCases() {
-    int[][][] twoTileOverlap0 = {
+    final int[][][] twoTileOverlap0 = {
         // @formatter:off
         {{2,2,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
         {{0,0,0},{2,5,5},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -41,7 +40,7 @@ class PlotConstraintTest {
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
         // @formatter:on
     };
-    int[][][] repairLowerRight = {
+    final int[][][] repairLowerRight = {
         // @formatter:off
         {{2,2,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
         {{0,0,0},{2,1,5},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -54,7 +53,7 @@ class PlotConstraintTest {
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
         // @formatter:on
     };
-    int[][][] repairUpperLeft = {
+    final int[][][] repairUpperLeft = {
         // @formatter:off
         {{2,1,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
         {{0,0,0},{2,5,5},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -67,7 +66,7 @@ class PlotConstraintTest {
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
         // @formatter:on
     };
-    int[][][] twoTileOverlap1 = {
+    final int[][][] twoTileOverlap1 = {
         // @formatter:off
         {{0,0,0},{3,3,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
         {{4,4,5},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -80,7 +79,7 @@ class PlotConstraintTest {
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
         // @formatter:on
     };
-    int[][][] repairLowerLeft = {
+    final int[][][] repairLowerLeft = {
         // @formatter:off
         {{0,0,0},{3,3,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
         {{4,2,5},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -93,7 +92,7 @@ class PlotConstraintTest {
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
         // @formatter:on
     };
-    int[][][] repairUpperRight = {
+    final int[][][] repairUpperRight = {
         // @formatter:off
         {{0,0,0},{3,2,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
         {{4,4,5},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -106,7 +105,7 @@ class PlotConstraintTest {
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
         // @formatter:on
     };
-    int[][][] leftOverFlow = {
+    final int[][][] leftOverFlow = {
         // @formatter:off
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -119,7 +118,7 @@ class PlotConstraintTest {
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
         // @formatter:on
     };
-    int[][][] repairLeftOverFlow = {
+    final int[][][] repairLeftOverFlow = {
         // @formatter:off
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -132,7 +131,7 @@ class PlotConstraintTest {
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
         // @formatter:on
     };
-    int[][][] bottomOverFlow = {
+    final int[][][] bottomOverFlow = {
         // @formatter:off
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -145,7 +144,7 @@ class PlotConstraintTest {
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
         // @formatter:on
     };
-    int[][][] repairBottomOverFlow = {
+    final int[][][] repairBottomOverFlow = {
         // @formatter:off
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -158,7 +157,7 @@ class PlotConstraintTest {
         {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
         // @formatter:on
     };
-    int[][][] validPlot = {
+    final int[][][] validPlot = {
         // @formatter:off
         {{3,4,1},{2,1,5},{2,0,3},{0,0,0},{3,2,0},{4,4,3},{4,1,4},{4,1,0},{3,1,4}},
         {{4,0,5},{0,4,0},{2,1,2},{1,0,2},{4,2,2},{1,2,1},{0,0,3},{2,1,3},{3,1,4}},
@@ -191,14 +190,15 @@ class PlotConstraintTest {
 
   @ParameterizedTest
   @MethodSource("repairTestCases")
-  void testConstraint(int[][][] original, boolean valid, int[][][] expected, SequencedSet<Coordinate> priority) {
+  void testConstraint(final int[][][] original, final boolean valid, final int[][][] expected,
+      final SequencedSet<Coordinate> priority) {
     iterableFactory.prioritize(priority);
-    var phenotype = encode(original);
+    final var phenotype = encode(original);
 
     assertEquals(valid, constraint.test(phenotype));
-    var result = constraint.repair(phenotype, 1);
+    final var result = constraint.repair(phenotype, 1);
 
-    int[][][] actual = decode(result);
+    final int[][][] actual = decode(result);
     assertArrayEquals(expected, actual);
   }
 
@@ -237,24 +237,24 @@ class PlotConstraintTest {
    *Apples       [3, 5)    5       [0, 6)
    *           </pre>
    */
-  Phenotype<IntegerGene, Double> encode(int[][][] genes) {
-    var perkChromosome = IntegerChromosome.of(Stream.of(genes).flatMap(Stream::of)
+  private Phenotype<IntegerGene, Double> encode(final int[][][] genes) {
+    final var perkChromosome = IntegerChromosome.of(Stream.of(genes).flatMap(Stream::of)
         .map(arr -> IntegerGene.of(arr[0], 0, 5)).toList());
-    var areaChromosome = IntegerChromosome.of(Stream.of(genes).flatMap(Stream::of)
+    final var areaChromosome = IntegerChromosome.of(Stream.of(genes).flatMap(Stream::of)
         .map(arr -> IntegerGene.of(arr[1], 0, 6)).toList());
-    var kindChromosome = IntegerChromosome.of(Stream.of(genes).flatMap(Stream::of)
+    final var kindChromosome = IntegerChromosome.of(Stream.of(genes).flatMap(Stream::of)
         .map(arr -> IntegerGene.of(arr[2], 0, 6)).toList());
     return Phenotype.of(Genotype.of(perkChromosome, areaChromosome, kindChromosome), 1);
   }
 
-  int[][][] decode(Phenotype<IntegerGene, Double> phenotype) {
-    var perkChromosome = phenotype.genotype().get(0);
-    var areaChromosome = phenotype.genotype().get(1);
-    var kindChromosome = phenotype.genotype().get(2);
-    var result = new int[9][9][9];
+  private int[][][] decode(final Phenotype<IntegerGene, Double> phenotype) {
+    final var perkChromosome = phenotype.genotype().get(0);
+    final var areaChromosome = phenotype.genotype().get(1);
+    final var kindChromosome = phenotype.genotype().get(2);
+    final var result = new int[9][9][9];
     for (int i = 0; i < 9; i++) {
       for (int j = 0; j < 9; j++) {
-        var idx = 9 * j + i;
+        final var idx = 9 * j + i;
         result[j][i] = new int[] {
             perkChromosome.get(idx).allele(),
             areaChromosome.get(idx).allele(),
