@@ -2,6 +2,7 @@ package io.nuevedejun.gadantic;
 
 import lombok.extern.slf4j.XSlf4j;
 
+import java.util.OptionalLong;
 import java.util.function.Function;
 
 public interface Properties {
@@ -15,6 +16,12 @@ public interface Properties {
   double harvestWeight(double fallback);
 
   double distinctWeight(double fallback);
+
+  int population(int fallback);
+
+  OptionalLong generations();
+
+  long shutdownMillis(long fallback);
 
   /**
    * Returns an instance of {@code Properties} that obtains property values from the system
@@ -32,6 +39,9 @@ public interface Properties {
     public static final String WEIGHT_QUALITY_PROPERTY = "weight.quality";
     public static final String WEIGHT_HARVEST_PROPERTY = "weight.harvest";
     public static final String WEIGHT_DISTINCT_PROPERTY = "weight.distinct";
+    public static final String POPULATION_PROPERTY = "population";
+    public static final String GENERATIONS_PROPERTY = "generations";
+    public static final String SHUTDOWN_MILLIS_PROPERTY = "shutdown.wait-millis";
 
     private System() {}
 
@@ -79,6 +89,22 @@ public interface Properties {
     @Override
     public double distinctWeight(final double fallback) {
       return property(WEIGHT_DISTINCT_PROPERTY, Double::parseDouble, fallback);
+    }
+
+    @Override
+    public int population(final int fallback) {
+      return property(POPULATION_PROPERTY, Integer::parseInt, fallback);
+    }
+
+    @Override
+    public OptionalLong generations() {
+      final Long result = property(GENERATIONS_PROPERTY, Long::parseLong, null);
+      return result == null ? OptionalLong.empty() : OptionalLong.of(result);
+    }
+
+    @Override
+    public long shutdownMillis(final long fallback) {
+      return property(SHUTDOWN_MILLIS_PROPERTY, Long::parseLong, fallback);
     }
   }
 }
