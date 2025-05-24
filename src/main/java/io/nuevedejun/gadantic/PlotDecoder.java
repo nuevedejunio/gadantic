@@ -1,0 +1,157 @@
+package io.nuevedejun.gadantic;
+
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.HARVEST;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
+import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
+
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import io.jenetics.Genotype;
+import io.jenetics.IntegerGene;
+import io.nuevedejun.gadantic.GenotypeIterableFactory.TiledCrop;
+import io.nuevedejun.gadantic.PlotPhenotype.Crop;
+import io.nuevedejun.gadantic.PlotPhenotype.Perk;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.XSlf4j;
+
+interface PlotDecoder {
+
+  @RequiredArgsConstructor
+  @ToString
+  class RichCrop {
+    final Crop crop;
+    final int x;
+    final int y;
+
+    @ToString.Exclude
+    final Map<Perk, Integer> perks = new EnumMap<>(Map.of(
+        WATER, 0,
+        WEED, 0,
+        QUALITY, 0,
+        HARVEST, 0));
+
+    void buff(final RichCrop other) {
+      if (this.crop != other.crop) {
+        other.perks.put(crop.perk, other.perks.get(crop.perk) + 1);
+      }
+    }
+
+    boolean has(final Perk perk) {
+      return perks.get(perk) >= crop.size;
+    }
+  }
+
+  @RequiredArgsConstructor
+  @XSlf4j
+  class Default implements PlotDecoder {
+    final GenotypeIterableFactory iterableFactory;
+
+    @Override
+    public Plot decode(Genotype<IntegerGene> genotype) {
+      final RichCrop[][] array = new RichCrop[9][9];
+      for (final var tile : iterableFactory.tiles(genotype, true)) {
+        if (array[tile.x()][tile.y()] == null) {
+          fillCropTile(array, tile);
+        }
+      }
+      final HashSet<RichCrop> set = HashSet.newHashSet(9 * 9);
+      for (int i = 0; i < array.length; i++) {
+        for (int j = 0; j < array[i].length; j++) {
+          applyBuffs(array, i, j);
+          set.add(array[i][j]);
+        }
+      }
+      log.trace("Set of decoded crops is: {}", set);
+
+      int water = 0;
+      int weed = 0;
+      int quality = 0;
+      int harvest = 0;
+      for (final var crop : set) {
+        if (crop.has(WATER)) {
+          water += crop.crop.size * crop.crop.size;
+        }
+        if (crop.has(WEED)) {
+          weed += crop.crop.size * crop.crop.size;
+        }
+        if (crop.has(QUALITY)) {
+          quality += crop.crop.size * crop.crop.size;
+        }
+        if (crop.has(HARVEST)) {
+          harvest += crop.crop.size * crop.crop.size;
+        }
+      }
+      final int distinct = set.stream().map(r -> r.crop).collect(Collectors.toSet()).size();
+      final String layoutUrl = createLayoutUrl(array);
+      return new Plot(Set.of(set.toArray(new RichCrop[0])), water, weed, quality, harvest, distinct, layoutUrl);
+    }
+
+    void fillCropTile(final RichCrop[][] array, final TiledCrop tile) {
+      final var rich = new RichCrop(tile.crop(), tile.x(), tile.y());
+      for (int i = 0; i < tile.crop().size; i++) {
+        for (int j = 0; j < tile.crop().size; j++) {
+          array[tile.x() + i][tile.y() + j] = rich;
+        }
+      }
+    }
+
+    void applyBuffs(final RichCrop[][] crops, final int x, final int y) {
+      final var crop = crops[x][y];
+      for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+          if (i != j && i != -j && x + i >= 0 && x + i < 9 && y + j >= 0 && y + j < 9) {
+            final var target = crops[x + i][y + j];
+            crop.buff(target);
+          }
+        }
+      }
+    }
+
+    String createLayoutUrl(final RichCrop[][] array) {
+      final StringBuilder sb = new StringBuilder()
+          .append("https://palia-garden-planner.vercel.app/?layout=")
+          .append("v0.4_D-111-111-111_CR");
+
+      for (int i = 0; i < 9; i += 3) {
+        for (int j = 0; j < 9; j += 3) {
+          sb.append('-');
+          for (int k = i; k < i + 3; k++) {
+            for (int l = j; l < j + 3; l++) {
+              sb.append(mapLayout(array[l][k].crop));
+            }
+          }
+        }
+      }
+
+      return sb.toString();
+    }
+
+    String mapLayout(final Crop crop) {
+      return switch (crop) {
+        case TOMATOES -> "T";
+        case POTATOES -> "P";
+        case CABBAGE -> "Cb";
+        case RICE -> "R";
+        case WHEAT -> "W";
+        case CORN -> "Cr";
+        case CARROTS -> "C";
+        case ONIONS -> "O";
+        case BOK_CHOY -> "Bk";
+        case COTTON -> "Co";
+        case BLUEBERRIES -> "B";
+        case BEANS -> "Bt";
+        case PEPPERS -> "S";
+        case PUMPKINS -> "Pm";
+        case APPLES -> "A";
+      };
+    }
+  }
+
+  Plot decode(final Genotype<IntegerGene> genotype);
+}

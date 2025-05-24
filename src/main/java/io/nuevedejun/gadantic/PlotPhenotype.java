@@ -5,16 +5,6 @@ import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
 import io.jenetics.Genotype;
 import io.jenetics.IntegerChromosome;
 import io.jenetics.IntegerGene;
@@ -65,76 +55,8 @@ class PlotPhenotype {
     Crop get(int area, int kind);
   }
 
-  record TiledCrop(int x, int y, Crop crop, int perk, int area, int kind, CropDecoder decoder) {
-
-    TiledCrop(final Coordinate coordinate, final Crop crop,
-        final int perk, final int area, final int kind, final CropDecoder decoder) {
-      this(coordinate.x(), coordinate.y(), crop, perk, area, kind, decoder);
-    }
-
-    static Iterable<TiledCrop> tiles(final Genotype<IntegerGene> genotype) {
-      return tiles(genotype, false);
-    }
-
-    static Iterable<TiledCrop> tiles(final Genotype<IntegerGene> genotype, final boolean shuffled) {
-      final var elements = new ArrayList<>(COORDINATES);
-      if (shuffled) {
-        Collections.shuffle(elements);
-      }
-
-      final var perkChromosome = genotype.get(0);
-      final var areaChromosome = genotype.get(1);
-      final var kindChromosome = genotype.get(2);
-
-      return () -> new Iterator<>() {
-        final Iterator<Coordinate> inner = elements.iterator();
-
-        @Override
-        public boolean hasNext() {
-          return inner.hasNext();
-        }
-
-        @Override
-        public TiledCrop next() {
-          final var coordinate = inner.next();
-
-          final int perk = perkChromosome.get(9 * coordinate.y() + coordinate.x()).allele();
-          final int area = areaChromosome.get(9 * coordinate.y() + coordinate.x()).allele();
-          final int kind = kindChromosome.get(9 * coordinate.y() + coordinate.x()).allele();
-
-          final CropDecoder cropDecoder = CropDecoder.ofPerk(perk);
-          final Crop crop = cropDecoder.get(area, kind);
-
-          return new TiledCrop(coordinate, crop, perk, area, kind, cropDecoder);
-        }
-      };
-    }
+  record FitnessCoefficients(double water, double weed, double quality, double harvest, double distinct) {
   }
-
-  @RequiredArgsConstructor
-  enum Border {
-    UPPER_LEFT('\u250C'), UPPER_RIGHT('\u2510'), LOWER_RIGHT('\u2518'), LOWER_LEFT('\u2514'),
-    LEFT_T('\u251C'), UPPER_T('\u252C'), RIGHT_T('\u2524'), LOWER_T('\u2534'),
-    CROSS('\u253C'), DASH('\u2500'), PIPE('\u2502'),
-    BLANK(' ');
-
-    static final Map<Character, Border> MAP = Map.copyOf(Stream.of(Border.values())
-        .collect(Collectors.toMap(b -> b.character, Function.identity())));
-
-    static Border from(final char c) {
-      log.entry((int) c);
-      return log.exit(MAP.get(c));
-    }
-
-    final char character;
-  }
-
-  record Coordinate(int x, int y) {
-  }
-
-  static final List<Coordinate> COORDINATES = IntStream.range(0, 9).boxed()
-      .flatMap(i -> IntStream.range(0, 9).mapToObj(j -> new Coordinate(i, j)))
-      .toList();
 
   static Crop decodeWater(final int area, final int kind) {
     return switch (kind) {
@@ -174,11 +96,8 @@ class PlotPhenotype {
     };
   }
 
-  final double waterCf;
-  final double weedCf;
-  final double qualityCf;
-  final double harvestCf;
-  final double distinctCf;
+  final PlotDecoder plotDecoder;
+  final FitnessCoefficients coefficients;
 
   Genotype<IntegerGene> genotype() {
     return Genotype.of(
@@ -188,11 +107,11 @@ class PlotPhenotype {
   }
 
   double fitness(final Genotype<IntegerGene> genotype) {
-    final Plot plot = Plot.decode(genotype);
-    return waterCf * plot.water / 81.0
-        + weedCf * plot.weed / 81.0
-        + qualityCf * plot.quality / 81.0
-        + harvestCf * plot.harvest / 81.0
-        + distinctCf * plot.distinct / Crop.values().length;
+    final Plot plot = plotDecoder.decode(genotype);
+    return coefficients.water() * plot.water / 81.0
+        + coefficients.weed() * plot.weed / 81.0
+        + coefficients.quality() * plot.quality / 81.0
+        + coefficients.harvest() * plot.harvest / 81.0
+        + coefficients.distinct() * plot.distinct / Crop.values().length;
   }
 }

@@ -14,11 +14,13 @@ import io.jenetics.IntegerChromosome;
 import io.jenetics.IntegerGene;
 import io.jenetics.Phenotype;
 import io.jenetics.engine.Constraint;
+import io.nuevedejun.gadantic.GenotypeIterableFactory.TiledCrop;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import io.nuevedejun.gadantic.PlotPhenotype.CropDecoder;
-import io.nuevedejun.gadantic.PlotPhenotype.TiledCrop;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.XSlf4j;
 
+@RequiredArgsConstructor
 @XSlf4j
 class PlotConstraint implements Constraint<IntegerGene, Double> {
 
@@ -63,12 +65,14 @@ class PlotConstraint implements Constraint<IntegerGene, Double> {
     OVERRIDE, REJECT, IGNORE
   }
 
+  final GenotypeIterableFactory iterableFactory;
+
   @Override
   public boolean test(final Phenotype<IntegerGene, Double> individual) {
     log.entry(pretty(individual));
 
     final var matrix = new Square[9][9];
-    for (final var tile : TiledCrop.tiles(individual.genotype())) {
+    for (final var tile : iterableFactory.tiles(individual.genotype())) {
       final Square square = Square.of(tile);
       switch (checkCropTile(matrix, square)) {
         case REJECT:
@@ -81,7 +85,7 @@ class PlotConstraint implements Constraint<IntegerGene, Double> {
           break;
       }
     }
-    log.atTrace().log(() -> "Approved plot:\n" + Plot.decode(individual.genotype()).str());
+    log.atTrace().log(() -> "Approved plot: " + pretty(individual.genotype()));
     return log.exit(true);
   }
 
@@ -93,7 +97,7 @@ class PlotConstraint implements Constraint<IntegerGene, Double> {
     final var matrix = new Square[9][9];
     final List<IntArrayValue> changes = new ArrayList<>();
     // shuffle the coordinates to avoid bias towards the first ones
-    for (final var tile : TiledCrop.tiles(individual.genotype(), true)) {
+    for (final var tile : iterableFactory.tiles(individual.genotype(), true)) {
       final Square square = Square.of(tile);
       final int valid = validCropSize(matrix, square);
       log.trace("Valid size for {} is {}", square, valid);
@@ -124,7 +128,7 @@ class PlotConstraint implements Constraint<IntegerGene, Double> {
           return arr;
         }),
         kindChromosome);
-    log.atTrace().log(() -> "Repaired plot:\n" + Plot.decode(fixed).str());
+    log.atTrace().log(() -> "Repaired plot: " + pretty(fixed));
     return log.exit(Phenotype.of(fixed, generation));
   }
 
@@ -214,9 +218,10 @@ class PlotConstraint implements Constraint<IntegerGene, Double> {
       valid--;
     } while (result == REJECT);
 
+    valid++; // undo last decrement
     if (result == OVERRIDE) {
       fillMatrix(matrix, square.withSize(valid));
     }
-    return valid + 1; // sum one to undo last decrement
+    return valid;
   }
 }
