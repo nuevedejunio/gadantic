@@ -34,9 +34,9 @@ public class Plot {
 
   @RequiredArgsConstructor
   enum Border {
-    UPPER_LEFT('\u250C'), UPPER_RIGHT('\u2510'), LOWER_RIGHT('\u2518'), LOWER_LEFT('\u2514'),
-    LEFT_T('\u251C'), UPPER_T('\u252C'), RIGHT_T('\u2524'), LOWER_T('\u2534'),
-    CROSS('\u253C'), DASH('\u2500'), PIPE('\u2502'),
+    UPPER_LEFT('┌'), UPPER_RIGHT('┐'), LOWER_RIGHT('┘'), LOWER_LEFT('└'),
+    LEFT_T('├'), UPPER_T('┬'), RIGHT_T('┤'), LOWER_T('┴'),
+    CROSS('┼'), DASH('─'), PIPE('│'),
     BLANK(' ');
 
     static final Map<Character, Border> MAP = Map.copyOf(Stream.of(Border.values())
@@ -54,10 +54,10 @@ public class Plot {
   static final int LINE_LEN = 9 * CELL_WIDTH + 2;
   static final int LINES = 9 * 2 + 1;
 
-  static final String HAS_WATER = "\u2660";
-  static final String HAS_WEED = "\u2619";
-  static final String HAS_QUALITY = "\u2605";
-  static final String HAS_HARVEST = "\u2698";
+  static final String HAS_WATER = "♠";
+  static final String HAS_WEED = "☙";
+  static final String HAS_QUALITY = "★";
+  static final String HAS_HARVEST = "⚘";
 
   final Set<RichCrop> crops;
   final int water;
@@ -67,8 +67,8 @@ public class Plot {
   final int distinct;
   final String layoutUrl;
 
-  StringBuilder replace(final StringBuilder sb, final int start, final String str) {
-    return sb.replace(start, start + str.length(), str);
+  void replace(final StringBuilder sb, final int start, final String str) {
+    sb.replace(start, start + str.length(), str);
   }
 
   void drawCell(final StringBuilder sb, final int pos, final int size) {

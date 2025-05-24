@@ -22,9 +22,10 @@ import io.jenetics.Phenotype;
 import io.nuevedejun.gadantic.GenotypeIterableFactory.Coordinate;
 
 class PlotConstraintTest {
-  PrioritizedIterableFactory iterableFactory = new PrioritizedIterableFactory();
 
-  PlotConstraint constraint = new PlotConstraint(iterableFactory);
+  final PrioritizedIterableFactory iterableFactory = new PrioritizedIterableFactory();
+
+  final PlotConstraint constraint = new PlotConstraint(iterableFactory);
 
   static List<Arguments> repairTestCases() {
     int[][][] twoTileOverlap0 = {

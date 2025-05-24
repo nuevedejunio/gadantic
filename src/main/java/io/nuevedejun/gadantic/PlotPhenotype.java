@@ -11,9 +11,8 @@ import io.jenetics.IntegerGene;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.XSlf4j;
 
-@RequiredArgsConstructor
 @XSlf4j
-class PlotPhenotype {
+record PlotPhenotype(PlotDecoder plotDecoder, FitnessCoefficients coefficients) {
 
   @RequiredArgsConstructor
   enum Crop {
@@ -95,9 +94,6 @@ class PlotPhenotype {
       default /* 5 */ -> Crop.APPLES;
     };
   }
-
-  final PlotDecoder plotDecoder;
-  final FitnessCoefficients coefficients;
 
   Genotype<IntegerGene> genotype() {
     return Genotype.of(

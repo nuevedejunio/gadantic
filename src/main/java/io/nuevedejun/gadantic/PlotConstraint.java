@@ -17,12 +17,10 @@ import io.jenetics.engine.Constraint;
 import io.nuevedejun.gadantic.GenotypeIterableFactory.TiledCrop;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import io.nuevedejun.gadantic.PlotPhenotype.CropDecoder;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.XSlf4j;
 
-@RequiredArgsConstructor
 @XSlf4j
-class PlotConstraint implements Constraint<IntegerGene, Double> {
+record PlotConstraint(GenotypeIterableFactory iterableFactory) implements Constraint<IntegerGene, Double> {
 
   record Square(int x0, int x1, int y0, int y1, int size) {
     Square(final int x, final int y, final int size) {
@@ -64,8 +62,6 @@ class PlotConstraint implements Constraint<IntegerGene, Double> {
   enum TileCheckResult {
     OVERRIDE, REJECT, IGNORE
   }
-
-  final GenotypeIterableFactory iterableFactory;
 
   @Override
   public boolean test(final Phenotype<IntegerGene, Double> individual) {
@@ -197,7 +193,7 @@ class PlotConstraint implements Constraint<IntegerGene, Double> {
 
   /**
    * Mark the tiles occupied by the crop.
-   * 
+   *
    * @param matrix the matrix to fill
    * @param target the square to fill with
    */

@@ -50,9 +50,10 @@ interface GenotypeIterableFactory {
         public TiledCrop next() {
           final var coordinate = inner.next();
 
-          final int perk = perkChromosome.get(9 * coordinate.y() + coordinate.x()).allele();
-          final int area = areaChromosome.get(9 * coordinate.y() + coordinate.x()).allele();
-          final int kind = kindChromosome.get(9 * coordinate.y() + coordinate.x()).allele();
+          final int index = 9 * coordinate.y() + coordinate.x();
+          final int perk = perkChromosome.get(index).allele();
+          final int area = areaChromosome.get(index).allele();
+          final int kind = kindChromosome.get(index).allele();
 
           final CropDecoder cropDecoder = CropDecoder.ofPerk(perk);
           final Crop crop = cropDecoder.get(area, kind);
