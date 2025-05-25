@@ -24,7 +24,7 @@ class PlotConstraintTest {
 
   final PrioritizedIterableFactory iterableFactory = new PrioritizedIterableFactory();
 
-  final PlotConstraint constraint = new PlotConstraint(iterableFactory);
+  final PlotConstraint constraint = PlotConstraint.create(iterableFactory);
 
   static List<Arguments> repairTestCases() {
     final int[][][] twoTileOverlap0 = {

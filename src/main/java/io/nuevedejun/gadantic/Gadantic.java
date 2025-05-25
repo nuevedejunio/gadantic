@@ -4,11 +4,13 @@ import io.jenetics.Genotype;
 import io.jenetics.IntegerGene;
 import io.jenetics.engine.Engine;
 import io.jenetics.engine.EvolutionResult;
+import io.jenetics.engine.EvolutionStart;
 import io.jenetics.engine.EvolutionStream;
 import io.nuevedejun.gadantic.PlotPhenotype.FitnessCoefficients;
 import lombok.extern.slf4j.XSlf4j;
 
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,8 +20,10 @@ import java.util.stream.Stream;
 public class Gadantic {
   public static void main(final String[] args) {
     final Thread main = Thread.currentThread();
-    final UncaughtExceptionHandler ueh = (thread, throwable) ->
-        log.error("Uncaught exception; thread: {}", thread, throwable);
+    final UncaughtExceptionHandler ueh = (thread, throwable) -> {
+      log.error("Uncaught exception; thread: {}", thread, throwable);
+      System.exit(1);
+    };
 
     final var gadantic = new Gadantic();
     Runtime.getRuntime().addShutdownHook(Thread.ofPlatform()
@@ -34,6 +38,8 @@ public class Gadantic {
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   private void run() {
+    log.info("Initializing application");
+
     final var properties = Properties.system();
 
     final var iterableFactory = PlotIterableFactory.standard();
@@ -45,23 +51,35 @@ public class Gadantic {
         properties.qualityWeight(1.0),
         properties.harvestWeight(1.0),
         properties.distinctWeight(1.0));
-    final var plotPhenotype = new PlotPhenotype(plotDecoder, coefficients);
+    final var plotPhenotype = PlotPhenotype.standard(plotDecoder, coefficients);
+    final var constraint = PlotConstraint.create(iterableFactory);
 
-    final var constraint = new PlotConstraint(iterableFactory);
+    final var encoding = plotPhenotype.encoding();
 
-    final var genotype = plotPhenotype.genotype();
+    log.info("Creating evolution engine");
     final var engine = Engine
-        .builder(plotPhenotype::fitness, constraint.constrain(genotype))
+        .builder(plotPhenotype::fitness, constraint.constrain(encoding))
         .constraint(constraint)
         .populationSize(properties.population(256))
         .build();
 
-    log.info("Initiating evolution");
-    final EvolutionStream<IntegerGene, Double> stream = engine.stream();
-    final Genotype<IntegerGene> result = limitStream(stream, properties)
-        .collect(EvolutionResult.toBestGenotype());
+    log.info("Loading result of previous execution");
+    final var persistence = EvolutionPersistence.file(
+        Path.of(properties.saveFile("gadantic.sav")),
+        engine.survivorsSelector(), engine.survivorsSize());
+    final EvolutionStart<IntegerGene, Double> start = persistence.read();
 
-    log.info("Plot:\n{}", plotDecoder.decode(result).str());
+    log.info("Initiating evolution");
+    final EvolutionStream<IntegerGene, Double> stream = engine.stream(start);
+    final EvolutionResult<IntegerGene, Double> result = limitStream(stream, properties)
+        .collect(EvolutionResult.toBestEvolutionResult());
+
+    log.info("Saving evolution result");
+    persistence.write(result);
+    log.debug("Finished saving evolution result");
+
+    final Genotype<IntegerGene> genotype = result.bestPhenotype().genotype();
+    log.info("Plot:\n{}", plotDecoder.decode(genotype).str());
   }
 
   private Stream<EvolutionResult<IntegerGene, Double>> limitStream(
@@ -78,7 +96,7 @@ public class Gadantic {
   private void shutdown(final Thread main) {
     try {
       stopped.set(true);
-      final long shutdownMillis = Properties.system().shutdownMillis(100);
+      final long shutdownMillis = Properties.system().shutdownMillis(500);
       if (!main.join(Duration.ofMillis(shutdownMillis))) {
         log.warn("The main thread did not complete within {} ms. Data may be lost.",
             shutdownMillis);

@@ -21,6 +21,8 @@ public interface Properties {
 
   OptionalLong generations();
 
+  String saveFile(String fallback);
+
   long shutdownMillis(long fallback);
 
   /**
@@ -41,6 +43,7 @@ public interface Properties {
     public static final String WEIGHT_DISTINCT_PROPERTY = "weight.distinct";
     public static final String POPULATION_PROPERTY = "population";
     public static final String GENERATIONS_PROPERTY = "generations";
+    public static final String SAVE_FILE_PROPERTY = "save-file";
     public static final String SHUTDOWN_MILLIS_PROPERTY = "shutdown.wait-millis";
 
     private System() {}
@@ -58,10 +61,10 @@ public interface Properties {
         final T defaultValue) {
       final String got = java.lang.System.getProperty(name);
       if (got == null) {
-        log.info("Property {}: {} (default)", name, defaultValue);
+        log.info("Using property {}: {} (default)", name, defaultValue);
         return defaultValue;
       } else {
-        log.info("Property {}: {}", name, got);
+        log.info("Using property {}: {}", name, got);
         return mapper.apply(got);
       }
     }
@@ -100,6 +103,11 @@ public interface Properties {
     public OptionalLong generations() {
       final Long result = property(GENERATIONS_PROPERTY, Long::parseLong, null);
       return result == null ? OptionalLong.empty() : OptionalLong.of(result);
+    }
+
+    @Override
+    public String saveFile(final String fallback) {
+      return property(SAVE_FILE_PROPERTY, Function.identity(), fallback);
     }
 
     @Override

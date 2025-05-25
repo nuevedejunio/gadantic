@@ -21,7 +21,7 @@ import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
 
-interface PlotDecoder {
+public interface PlotDecoder {
 
   @RequiredArgsConstructor
   @ToString
@@ -51,12 +51,12 @@ interface PlotDecoder {
   Plot decode(final Genotype<IntegerGene> genotype);
 
   static PlotDecoder standard(final PlotIterableFactory iterableFactory) {
-    return new Default(iterableFactory);
+    return new Standard(iterableFactory);
   }
 
   @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
   @XSlf4j
-  class Default implements PlotDecoder {
+  class Standard implements PlotDecoder {
     final PlotIterableFactory iterableFactory;
 
     @Override

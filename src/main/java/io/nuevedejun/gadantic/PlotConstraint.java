@@ -9,6 +9,8 @@ import io.nuevedejun.gadantic.PlotIterableFactory.TiledCrop;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import io.nuevedejun.gadantic.PlotPhenotype.CropDecoder;
 import io.nuevedejun.gadantic.PlotPhenotype.Perk;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.XSlf4j;
 
 import java.util.ArrayList;
@@ -17,9 +19,13 @@ import java.util.List;
 
 import static java.lang.Math.min;
 
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @XSlf4j
-public record PlotConstraint(PlotIterableFactory iterableFactory)
-    implements Constraint<IntegerGene, Double> {
+public class PlotConstraint implements Constraint<IntegerGene, Double> {
+
+  public static PlotConstraint create(final PlotIterableFactory iterableFactory) {
+    return new PlotConstraint(iterableFactory);
+  }
 
   private record Square(int x0, int x1, int y0, int y1, int size) {
     private Square(final int x, final int y, final int size) {
@@ -31,8 +37,8 @@ public record PlotConstraint(PlotIterableFactory iterableFactory)
     }
 
     /**
-     * Creates a new {@code Square} instance with the specified size,
-     * using the current object's origin coordinates.
+     * Creates a new {@code Square} instance with the specified size, using the current object's
+     * origin coordinates.
      *
      * @param size the length of the sides of the new square
      * @return a new {@code Square} with the same origin and the given size
@@ -42,12 +48,12 @@ public record PlotConstraint(PlotIterableFactory iterableFactory)
     }
 
     /**
-     * Checks if the specified {@code Square} is completely contained within the
-     * bounds defined by this object.
+     * Checks if the specified {@code Square} is completely contained within the bounds defined by
+     * this object.
      *
      * @param square the {@code Square} to check for containment
-     * @return {@code true} if the given square is entirely within the bounds;
-     *         {@code false} otherwise
+     * @return {@code true} if the given square is entirely within the bounds; {@code false}
+     * otherwise
      */
     private boolean contains(final Square square) {
       return square.x0() >= x0 && square.y0() >= y0
@@ -63,6 +69,9 @@ public record PlotConstraint(PlotIterableFactory iterableFactory)
   private enum TileCheckResult {
     OVERRIDE, REJECT, IGNORE
   }
+
+
+  private final PlotIterableFactory iterableFactory;
 
   @Override
   public boolean test(final Phenotype<IntegerGene, Double> individual) {

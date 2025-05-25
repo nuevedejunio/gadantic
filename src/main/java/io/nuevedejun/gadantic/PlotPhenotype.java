@@ -3,6 +3,7 @@ package io.nuevedejun.gadantic;
 import io.jenetics.Genotype;
 import io.jenetics.IntegerChromosome;
 import io.jenetics.IntegerGene;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -13,13 +14,16 @@ import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
 
-@XSlf4j
-public record PlotPhenotype(PlotDecoder plotDecoder, FitnessCoefficients coefficients) {
+public interface PlotPhenotype {
+
+  Genotype<IntegerGene> encoding();
+
+  double fitness(Genotype<IntegerGene> genotype);
 
   @RequiredArgsConstructor
   @Getter
   @Accessors(fluent = true)
-  public enum Crop {
+  enum Crop {
     // single-tile crops
     TOMATOES(1, WATER), POTATOES(1, WATER), CABBAGE(1, WATER), RICE(1, HARVEST), WHEAT(1, HARVEST),
     CORN(1, HARVEST), CARROTS(1, WEED), ONIONS(1, WEED), BOK_CHOY(1, WEED), COTTON(1, QUALITY),
@@ -32,20 +36,19 @@ public record PlotPhenotype(PlotDecoder plotDecoder, FitnessCoefficients coeffic
     private final Perk perk;
   }
 
-
   /**
    * Decodes the crop type based on the type of perk, area, and kind.
    * <p>
    * These values do not map directly with crop characteristics, but instead where chosen to
-   * guarantee a normal distribution of the probability of each crop type. When new crops are added,
-   * the ranges of those parameters must be adjusted.
+   * guarantee a normal distribution of the probability of each crop type. When new crops are
+   * added, the ranges of those parameters must be adjusted.
    */
   interface CropDecoder {
     Crop get(int area, int kind);
   }
 
 
-  public enum Perk implements CropDecoder {
+  enum Perk implements CropDecoder {
     WATER {
       @Override
       public Crop get(final int area, final int kind) {
@@ -104,24 +107,38 @@ public record PlotPhenotype(PlotDecoder plotDecoder, FitnessCoefficients coeffic
   }
 
 
-  public record FitnessCoefficients(
+  record FitnessCoefficients(
       double water, double weed, double quality, double harvest,
       double distinct) {
   }
 
-  public Genotype<IntegerGene> genotype() {
-    return Genotype.of(
-        /* perk */ IntegerChromosome.of(0, 5, 9 * 9),
-        /* area */ IntegerChromosome.of(0, 6, 9 * 9),
-        /* kind */ IntegerChromosome.of(0, 6, 9 * 9));
+  static PlotPhenotype standard(final PlotDecoder plotDecoder,
+      final FitnessCoefficients coefficients) {
+    return new Standard(plotDecoder, coefficients);
   }
 
-  public double fitness(final Genotype<IntegerGene> genotype) {
-    final Plot plot = plotDecoder.decode(genotype);
-    return coefficients.water() * plot.water() / 81.0
-        + coefficients.weed() * plot.weed() / 81.0
-        + coefficients.quality() * plot.quality() / 81.0
-        + coefficients.harvest() * plot.harvest() / 81.0
-        + coefficients.distinct() * plot.distinct() / Crop.values().length;
+  @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+  @XSlf4j
+  class Standard implements PlotPhenotype {
+    private final PlotDecoder plotDecoder;
+    private final FitnessCoefficients coefficients;
+
+    @Override
+    public Genotype<IntegerGene> encoding() {
+      return Genotype.of(
+          /* perk */ IntegerChromosome.of(0, 5, 9 * 9),
+          /* area */ IntegerChromosome.of(0, 6, 9 * 9),
+          /* kind */ IntegerChromosome.of(0, 6, 9 * 9));
+    }
+
+    @Override
+    public double fitness(final Genotype<IntegerGene> genotype) {
+      final Plot plot = plotDecoder.decode(genotype);
+      return coefficients.water() * plot.water() / 81.0
+          + coefficients.weed() * plot.weed() / 81.0
+          + coefficients.quality() * plot.quality() / 81.0
+          + coefficients.harvest() * plot.harvest() / 81.0
+          + coefficients.distinct() * plot.distinct() / Crop.values().length;
+    }
   }
 }
