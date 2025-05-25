@@ -23,13 +23,15 @@ public interface Properties {
 
   String saveFile(String fallback);
 
+  long printDelayMillis(long fallback);
+
   long shutdownMillis(long fallback);
 
   /**
    * Returns an instance of {@code Properties} that obtains property values from the system
    * properties.
    */
-  static Properties system() {
+  static System system() {
     return new System();
   }
 
@@ -44,6 +46,7 @@ public interface Properties {
     public static final String POPULATION_PROPERTY = "population";
     public static final String GENERATIONS_PROPERTY = "generations";
     public static final String SAVE_FILE_PROPERTY = "save-file";
+    public static final String PRINT_DELAY_MILLIS_PROPERTY = "print-delay-millis";
     public static final String SHUTDOWN_MILLIS_PROPERTY = "shutdown.wait-millis";
 
     private System() {}
@@ -108,6 +111,11 @@ public interface Properties {
     @Override
     public String saveFile(final String fallback) {
       return property(SAVE_FILE_PROPERTY, Function.identity(), fallback);
+    }
+
+    @Override
+    public long printDelayMillis(final long fallback) {
+      return property(PRINT_DELAY_MILLIS_PROPERTY, Long::parseLong, fallback);
     }
 
     @Override

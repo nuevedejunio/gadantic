@@ -1,7 +1,11 @@
 package io.nuevedejun.gadantic;
 
-import io.jenetics.Genotype;
 import io.jenetics.IntegerGene;
+import io.jenetics.Mutator;
+import io.jenetics.RouletteWheelSelector;
+import io.jenetics.ShuffleMutator;
+import io.jenetics.StochasticUniversalSelector;
+import io.jenetics.UniformCrossover;
 import io.jenetics.engine.Engine;
 import io.jenetics.engine.EvolutionResult;
 import io.jenetics.engine.EvolutionStart;
@@ -39,9 +43,7 @@ public class Gadantic {
 
   private void run() {
     log.info("Initializing application");
-
     final var properties = Properties.system();
-
     final var iterableFactory = PlotIterableFactory.standard();
     final var plotDecoder = PlotDecoder.standard(iterableFactory);
 
@@ -61,25 +63,35 @@ public class Gadantic {
         .builder(plotPhenotype::fitness, constraint.constrain(encoding))
         .constraint(constraint)
         .populationSize(properties.population(256))
+        .survivorsSize(51)
+        .survivorsSelector(new StochasticUniversalSelector<>())
+        .offspringSelector(new RouletteWheelSelector<>())
+        .alterers(
+            new ShuffleMutator<>(0.11),
+            new UniformCrossover<>(0.11, 0.11),
+            new Mutator<>(0.03))
         .build();
 
-    log.info("Loading result of previous execution");
-    final var persistence = EvolutionPersistence.file(
+    try (final var persistence = EvolutionPersistence.file(
         Path.of(properties.saveFile("gadantic.sav")),
         engine.survivorsSelector(), engine.survivorsSize());
-    final EvolutionStart<IntegerGene, Double> start = persistence.read();
+        final var printer = PlotPrinter.standard(plotDecoder, properties.printDelayMillis(1000))) {
 
-    log.info("Initiating evolution");
-    final EvolutionStream<IntegerGene, Double> stream = engine.stream(start);
-    final EvolutionResult<IntegerGene, Double> result = limitStream(stream, properties)
-        .collect(EvolutionResult.toBestEvolutionResult());
+      log.info("Loading result of previous execution");
+      final EvolutionStart<IntegerGene, Double> start = persistence.read();
 
-    log.info("Saving evolution result");
-    persistence.write(result);
-    log.debug("Finished saving evolution result");
+      log.info("Initiating evolution");
+      final EvolutionStream<IntegerGene, Double> stream = engine.stream(start);
+      final EvolutionResult<IntegerGene, Double> result = limitStream(stream, properties)
+          .peek(printer::accept) //NOSONAR java:S3864 peek is ok for this use case
+          .collect(EvolutionResult.toBestEvolutionResult());
 
-    final Genotype<IntegerGene> genotype = result.bestPhenotype().genotype();
-    log.info("Plot:\n{}", plotDecoder.decode(genotype).str());
+      log.info("Evolution terminated. Saving result");
+      persistence.write(result);
+      log.debug("Finished saving evolution result");
+
+      printer.print(result.bestPhenotype());
+    }
   }
 
   private Stream<EvolutionResult<IntegerGene, Double>> limitStream(
@@ -95,6 +107,7 @@ public class Gadantic {
 
   private void shutdown(final Thread main) {
     try {
+      log.info("Initiating controlled application shutdown");
       stopped.set(true);
       final long shutdownMillis = Properties.system().shutdownMillis(500);
       if (!main.join(Duration.ofMillis(shutdownMillis))) {

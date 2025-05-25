@@ -29,7 +29,7 @@ public interface PlotIterableFactory {
 
   Iterable<TiledCrop> tiles(final Genotype<IntegerGene> genotype, final boolean shuffled);
 
-  static PlotIterableFactory standard() {
+  static Standard standard() {
     return new Standard();
   }
 

@@ -6,8 +6,10 @@ import io.nuevedejun.gadantic.PlotIterableFactory.TiledCrop;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import io.nuevedejun.gadantic.PlotPhenotype.Perk;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.XSlf4j;
 
 import java.util.EnumMap;
@@ -24,40 +26,44 @@ import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
 public interface PlotDecoder {
 
   @RequiredArgsConstructor
+  @Accessors(fluent = true)
   @ToString
   class RichCrop {
-    final Crop crop;
-    final int x;
-    final int y;
+    @Getter
+    private final Crop crop;
+    @Getter
+    private final int x;
+    @Getter
+    private final int y;
 
     @ToString.Exclude
-    final Map<Perk, Integer> perks = new EnumMap<>(Map.of(
+    private final Map<Perk, Integer> perks = new EnumMap<>(Map.of(
         WATER, 0,
         WEED, 0,
         QUALITY, 0,
         HARVEST, 0));
 
-    void buff(final RichCrop other) {
+    private void buff(final RichCrop other) {
       if (this.crop != other.crop) {
         other.perks.put(crop.perk(), other.perks.get(crop.perk()) + 1);
       }
     }
 
-    boolean has(final Perk perk) {
+    public boolean has(final Perk perk) {
       return perks.get(perk) >= crop.size();
     }
   }
 
   Plot decode(final Genotype<IntegerGene> genotype);
 
-  static PlotDecoder standard(final PlotIterableFactory iterableFactory) {
+  static Standard standard(final PlotIterableFactory iterableFactory) {
     return new Standard(iterableFactory);
   }
 
   @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
   @XSlf4j
   class Standard implements PlotDecoder {
-    final PlotIterableFactory iterableFactory;
+    private final PlotIterableFactory iterableFactory;
 
     @Override
     public Plot decode(final Genotype<IntegerGene> genotype) {
@@ -99,7 +105,7 @@ public interface PlotDecoder {
       return new Plot(Set.of(set.toArray(new RichCrop[0])), water, weed, quality, harvest, distinct, layoutUrl);
     }
 
-    void fillCropTile(final RichCrop[][] array, final TiledCrop tile) {
+    private void fillCropTile(final RichCrop[][] array, final TiledCrop tile) {
       final var rich = new RichCrop(tile.crop(), tile.x(), tile.y());
       for (int i = 0; i < tile.crop().size(); i++) {
         for (int j = 0; j < tile.crop().size(); j++) {
@@ -108,7 +114,7 @@ public interface PlotDecoder {
       }
     }
 
-    void applyBuffs(final RichCrop[][] crops, final int x, final int y) {
+    private void applyBuffs(final RichCrop[][] crops, final int x, final int y) {
       final var crop = crops[x][y];
       for (int i = -1; i <= 1; i++) {
         for (int j = -1; j <= 1; j++) {
@@ -120,7 +126,7 @@ public interface PlotDecoder {
       }
     }
 
-    String createLayoutUrl(final RichCrop[][] array) {
+    private String createLayoutUrl(final RichCrop[][] array) {
       final StringBuilder sb = new StringBuilder()
           .append("https://palia-garden-planner.vercel.app/?layout=")
           .append("v0.4_D-111-111-111_CR");
@@ -139,7 +145,7 @@ public interface PlotDecoder {
       return sb.toString();
     }
 
-    String mapLayout(final Crop crop) {
+    private String mapLayout(final Crop crop) {
       return switch (crop) {
         case TOMATOES -> "T";
         case POTATOES -> "P";

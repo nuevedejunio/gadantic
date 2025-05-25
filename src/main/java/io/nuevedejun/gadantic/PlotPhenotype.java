@@ -112,7 +112,7 @@ public interface PlotPhenotype {
       double distinct) {
   }
 
-  static PlotPhenotype standard(final PlotDecoder plotDecoder,
+  static Standard standard(final PlotDecoder plotDecoder,
       final FitnessCoefficients coefficients) {
     return new Standard(plotDecoder, coefficients);
   }

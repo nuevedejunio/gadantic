@@ -5,6 +5,7 @@ import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.XSlf4j;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -31,6 +32,12 @@ public record Plot(
   private static final String HAS_QUALITY = "★";
   private static final String HAS_HARVEST = "⚘";
 
+  public static final List<String> LEGEND = List.of(
+      HAS_WATER + " water",
+      HAS_WEED + " weed",
+      HAS_QUALITY + " quality",
+      HAS_HARVEST + " harvest");
+
   @RequiredArgsConstructor
   private enum Border {
     UPPER_LEFT('┌'), UPPER_RIGHT('┐'), LOWER_RIGHT('┘'), LOWER_LEFT('└'),
@@ -49,17 +56,20 @@ public record Plot(
     private final char character;
   }
 
-  public String str() {
+  public String tableString() {
     final StringBuilder sb = new StringBuilder();
+
     for (int i = 0; i < LINES; i++) {
       // reserve space for the table
       sb.repeat(Border.BLANK.character, LINE_LEN - 1).append('\n');
     }
+    sb.deleteCharAt(sb.length() - 1);
+
     for (final var annotated : crops) {
       log.trace("Drawing cell of {}", annotated);
 
-      final int start = annotated.x * CELL_WIDTH + 2 * annotated.y * LINE_LEN;
-      final Crop crop = annotated.crop;
+      final int start = annotated.x() * CELL_WIDTH + 2 * annotated.y() * LINE_LEN;
+      final Crop crop = annotated.crop();
       drawCell(sb, start, crop.size());
 
       final String name = crop.name();
@@ -76,17 +86,6 @@ public record Plot(
     drawVertical(sb, 2 * LINE_LEN - 2, LINES - 2);
     // draw lower border
     drawHorizontal(sb, 1 + (LINES - 1) * LINE_LEN, LINE_LEN - 3);
-
-    sb.append(HAS_WATER).append(" water; ");
-    sb.append(HAS_WEED).append(" weed; ");
-    sb.append(HAS_QUALITY).append(" quality; ");
-    sb.append(HAS_HARVEST).append(" harvest\n");
-    sb.append(crops.size()).append(" crops; ").append(distinct).append(" distinct\n");
-    sb.append(water).append(" (").append(100 * water / 81).append("%) water; ");
-    sb.append(weed).append(" (").append(100 * weed / 81).append("%) weed; ");
-    sb.append(quality).append(" (").append(100 * quality / 81).append("%) quality; ");
-    sb.append(harvest).append(" (").append(100 * harvest / 81).append("%) harvest\n");
-    sb.append("Open in Garden Planner: ").append(layoutUrl).append('\n');
     return sb.toString();
   }
 
