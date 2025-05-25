@@ -81,11 +81,14 @@ public interface EvolutionPersistence {
         }
       }, executor).join();
 
+      final Population actual;
       if (population == null) {
         log.warn("Deserialized format is null. Serialization may have been corrupted,"
             + " or format changed since last execution. Evolution will start from scratch.");
+        actual = Population.empty();
+      } else {
+        actual = population;
       }
-      final Population actual = population != null ? population : Population.empty();
       final var collect = actual.individuals.stream()
           .map(this::toPhenotype)
           .collect(ISeq.toISeq());
