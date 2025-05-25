@@ -17,6 +17,7 @@ import org.apache.fury.io.FuryInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -74,6 +75,9 @@ public interface EvolutionPersistence {
       final Population population = CompletableFuture.supplyAsync(() -> {
         try (final var in = new FuryInputStream(Files.newInputStream(file))) {
           return fury.deserializeJavaObject(in, Population.class);
+        } catch (final NoSuchFileException e) {
+          log.info("File {} was not found. Evolution will start from scratch.", file);
+          return Population.empty();
         } catch (final IOException | IndexOutOfBoundsException e) {
           log.warn("An exception prevented reading file {}. "
               + "Evolution will start from scratch.", file, e);

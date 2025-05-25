@@ -2,125 +2,73 @@ package io.nuevedejun.gadantic;
 
 import lombok.extern.slf4j.XSlf4j;
 
-import java.util.OptionalLong;
-import java.util.function.Function;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
 
 public interface Properties {
 
-  double waterWeight(double fallback);
+  String getString(String key);
 
-  double weedWeight(double fallback);
+  int getInt(String key);
 
-  double qualityWeight(double fallback);
+  long getLong(String key);
 
-  double harvestWeight(double fallback);
+  double getDouble(String key);
 
-  double distinctWeight(double fallback);
-
-  int population(int fallback);
-
-  OptionalLong generations();
-
-  String saveFile(String fallback);
-
-  long printDelayMillis(long fallback);
-
-  long shutdownMillis(long fallback);
-
-  /**
-   * Returns an instance of {@code Properties} that obtains property values from the system
-   * properties.
-   */
-  static System system() {
-    return new System();
+  static File file() {
+    return new File();
   }
 
   /** Obtains property values from the system properties. */
   @XSlf4j
-  class System implements Properties {
-    public static final String WEIGHT_WATER_PROPERTY = "weight.water";
-    public static final String WEIGHT_WEED_PROPERTY = "weight.weed";
-    public static final String WEIGHT_QUALITY_PROPERTY = "weight.quality";
-    public static final String WEIGHT_HARVEST_PROPERTY = "weight.harvest";
-    public static final String WEIGHT_DISTINCT_PROPERTY = "weight.distinct";
-    public static final String POPULATION_PROPERTY = "population";
-    public static final String GENERATIONS_PROPERTY = "generations";
-    public static final String SAVE_FILE_PROPERTY = "save-file";
-    public static final String PRINT_DELAY_MILLIS_PROPERTY = "print-delay-millis";
-    public static final String SHUTDOWN_MILLIS_PROPERTY = "shutdown.wait-millis";
+  class File implements Properties {
+    private final java.util.Properties props;
 
-    private System() {}
-
-    /**
-     * Reads a system property and applies a mapping function to it.
-     *
-     * @param name the name of the property
-     * @param mapper the mapping function
-     * @param defaultValue the value to use if the property does not exist
-     * @return the property value after applying the mapping function, if the property is present.
-     * The default value otherwise.
-     */
-    private <T> T property(final String name, final Function<String, T> mapper,
-        final T defaultValue) {
-      final String got = java.lang.System.getProperty(name);
-      if (got == null) {
-        log.info("Using property {}: {} (default)", name, defaultValue);
-        return defaultValue;
-      } else {
-        log.info("Using property {}: {}", name, got);
-        return mapper.apply(got);
+    private File() {
+      final var defaults = new java.util.Properties();
+      this.props = new java.util.Properties(defaults);
+      try (final InputStream din = getClass().getResourceAsStream("/defaults.properties")) {
+        defaults.load(din);
+      } catch (final IOException e) {
+        throw new IllegalStateException("Exception caused by dev error. Debug.", e);
+      }
+      try (final InputStream ain = Files.newInputStream(Paths.get("application.properties"))) {
+        props.load(ain);
+      } catch (final NoSuchFileException e) {
+        log.info("File application.properties was not found in working directory. "
+            + "Default properties will be used.");
+      } catch (final IOException e) {
+        log.warn("An exception prevented reading file application.properties. "
+            + "Default properties will be used.", e);
       }
     }
 
-    @Override
-    public double waterWeight(final double fallback) {
-      return property(WEIGHT_WATER_PROPERTY, Double::parseDouble, fallback);
+    private <T> T log(final String key, final T value) {
+      log.info("Using property {}={}", key, value);
+      return value;
     }
 
     @Override
-    public double weedWeight(final double fallback) {
-      return property(WEIGHT_WEED_PROPERTY, Double::parseDouble, fallback);
+    public String getString(final String key) {
+      return log(key, props.getProperty(key));
     }
 
     @Override
-    public double qualityWeight(final double fallback) {
-      return property(WEIGHT_QUALITY_PROPERTY, Double::parseDouble, fallback);
+    public int getInt(final String key) {
+      return log(key, Integer.parseInt(props.getProperty(key)));
     }
 
     @Override
-    public double harvestWeight(final double fallback) {
-      return property(WEIGHT_HARVEST_PROPERTY, Double::parseDouble, fallback);
+    public long getLong(final String key) {
+      return log(key, Long.parseLong(props.getProperty(key)));
     }
 
     @Override
-    public double distinctWeight(final double fallback) {
-      return property(WEIGHT_DISTINCT_PROPERTY, Double::parseDouble, fallback);
-    }
-
-    @Override
-    public int population(final int fallback) {
-      return property(POPULATION_PROPERTY, Integer::parseInt, fallback);
-    }
-
-    @Override
-    public OptionalLong generations() {
-      final Long result = property(GENERATIONS_PROPERTY, Long::parseLong, null);
-      return result == null ? OptionalLong.empty() : OptionalLong.of(result);
-    }
-
-    @Override
-    public String saveFile(final String fallback) {
-      return property(SAVE_FILE_PROPERTY, Function.identity(), fallback);
-    }
-
-    @Override
-    public long printDelayMillis(final long fallback) {
-      return property(PRINT_DELAY_MILLIS_PROPERTY, Long::parseLong, fallback);
-    }
-
-    @Override
-    public long shutdownMillis(final long fallback) {
-      return property(SHUTDOWN_MILLIS_PROPERTY, Long::parseLong, fallback);
+    public double getDouble(final String key) {
+      return log(key, Double.parseDouble(props.getProperty(key)));
     }
   }
 }

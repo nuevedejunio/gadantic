@@ -16,7 +16,6 @@ import lombok.extern.slf4j.XSlf4j;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -39,20 +38,20 @@ public class Gadantic {
     gadantic.run();
   }
 
+  private final Properties properties = Properties.file();
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   private void run() {
     log.info("Initializing application");
-    final var properties = Properties.system();
     final var iterableFactory = PlotIterableFactory.standard();
     final var plotDecoder = PlotDecoder.standard(iterableFactory);
 
     final var coefficients = new FitnessCoefficients(
-        properties.waterWeight(1.0),
-        properties.weedWeight(1.0),
-        properties.qualityWeight(1.0),
-        properties.harvestWeight(1.0),
-        properties.distinctWeight(1.0));
+        properties.getDouble("weights.water-retention"),
+        properties.getDouble("weights.weed-prevention"),
+        properties.getDouble("weights.quality-boost"),
+        properties.getDouble("weights.harvest-increase"),
+        properties.getDouble("weights.unique-crops"));
     final var plotPhenotype = PlotPhenotype.standard(plotDecoder, coefficients);
     final var constraint = PlotConstraint.create(iterableFactory);
 
@@ -62,20 +61,23 @@ public class Gadantic {
     final var engine = Engine
         .builder(plotPhenotype::fitness, constraint.constrain(encoding))
         .constraint(constraint)
-        .populationSize(properties.population(256))
-        .survivorsSize(51)
+        .populationSize(properties.getInt("ga.population-size"))
+        .offspringFraction(properties.getDouble("ga.offspring-fraction"))
         .survivorsSelector(new StochasticUniversalSelector<>())
         .offspringSelector(new RouletteWheelSelector<>())
         .alterers(
-            new ShuffleMutator<>(0.11),
-            new UniformCrossover<>(0.11, 0.11),
-            new Mutator<>(0.03))
+            new ShuffleMutator<>(properties.getDouble("ga.shuffle-probability")),
+            new UniformCrossover<>(
+                properties.getDouble("ga.crossover-probability"),
+                properties.getDouble("ga.swap-probability")),
+            new Mutator<>(properties.getDouble("ga.mutation-probability")))
         .build();
 
     try (final var persistence = EvolutionPersistence.file(
-        Path.of(properties.saveFile("gadantic.sav")),
+        Path.of(properties.getString("save-file")),
         engine.survivorsSelector(), engine.survivorsSize());
-        final var printer = PlotPrinter.standard(plotDecoder, properties.printDelayMillis(1000))) {
+        final var printer = PlotPrinter.standard(plotDecoder,
+            properties.getInt("print-delay-millis"))) {
 
       log.info("Loading result of previous execution");
       final EvolutionStart<IntegerGene, Double> start = persistence.read();
@@ -97,9 +99,9 @@ public class Gadantic {
   private Stream<EvolutionResult<IntegerGene, Double>> limitStream(
       final EvolutionStream<IntegerGene, Double> stream, final Properties properties) {
     final var ongoing = stream.limit(_ -> !stopped.get());
-    final OptionalLong generations = properties.generations();
-    if (generations.isPresent()) {
-      return ongoing.limit(generations.getAsLong());
+    final long generations = properties.getLong("ga.generations");
+    if (generations >= 0) {
+      return ongoing.limit(generations);
     } else {
       return ongoing;
     }
@@ -109,7 +111,7 @@ public class Gadantic {
     try {
       log.info("Initiating controlled application shutdown");
       stopped.set(true);
-      final long shutdownMillis = Properties.system().shutdownMillis(500);
+      final long shutdownMillis = properties.getInt("shutdown-wait-millis");
       if (!main.join(Duration.ofMillis(shutdownMillis))) {
         log.warn("The main thread did not complete within {} ms. Data may be lost.",
             shutdownMillis);
