@@ -4,6 +4,7 @@ import io.jenetics.Genotype;
 import io.jenetics.IntegerGene;
 import io.jenetics.Phenotype;
 import io.jenetics.engine.EvolutionResult;
+import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import lombok.extern.slf4j.XSlf4j;
 
 import java.util.concurrent.Executors;
@@ -76,10 +77,11 @@ public interface PlotPrinter {
       appendPercent(sb, plot.quality(), "Quality").append(" | ");
       appendPercent(sb, plot.harvest(), "Harvest").append(" | ");
       sb.append("Unique crops: (").append(plot.distinct()).append('|')
-          .append(percent(plot.distinct(), 15)).append("%)").append('\n');
+          .append(percent(plot.distinct(), Crop.len())).append("%)").append('\n');
 
       individual.fitnessOptional().ifPresent(fitness ->
-          sb.append("Fitness: ").append(fitness).append('\n'));
+          sb.append("Fitness: ").append(String.format("%2.5f", fitness)).append(" | "));
+      sb.append("Generation: ").append(individual.generation()).append('\n');
 
       sb.append("Garden Planner: ").append(plot.layoutUrl());
 

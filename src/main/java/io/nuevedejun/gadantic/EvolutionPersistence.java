@@ -1,5 +1,6 @@
 package io.nuevedejun.gadantic;
 
+import io.jenetics.Chromosome;
 import io.jenetics.Genotype;
 import io.jenetics.IntegerChromosome;
 import io.jenetics.IntegerGene;
@@ -9,6 +10,7 @@ import io.jenetics.Selector;
 import io.jenetics.engine.EvolutionResult;
 import io.jenetics.engine.EvolutionStart;
 import io.jenetics.util.ISeq;
+import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import lombok.extern.slf4j.XSlf4j;
 import org.apache.fury.Fury;
 import org.apache.fury.config.Language;
@@ -45,8 +47,7 @@ public interface EvolutionPersistence {
     }
 
 
-    record Individual(List<Integer> perks, List<Integer> areas, List<Integer> kinds,
-        long generation) {
+    record Individual(List<Integer> genes, long generation) {
     }
 
 
@@ -116,22 +117,14 @@ public interface EvolutionPersistence {
     }
 
     private Individual toIndividual(final Phenotype<IntegerGene, Double> phenotype) {
-      final Genotype<IntegerGene> genotype = phenotype.genotype();
-      return new Individual(
-          genotype.get(0).as(IntegerChromosome.class).intStream().boxed().toList(),
-          genotype.get(1).as(IntegerChromosome.class).intStream().boxed().toList(),
-          genotype.get(2).as(IntegerChromosome.class).intStream().boxed().toList(),
+      final Chromosome<IntegerGene> chromosome = phenotype.genotype().chromosome();
+      return new Individual(chromosome.as(IntegerChromosome.class).intStream().boxed().toList(),
           phenotype.generation());
     }
 
     private Phenotype<IntegerGene, Double> toPhenotype(final Individual individual) {
-      final var genotype = Genotype.of(
-          IntegerChromosome.of(individual.perks().stream()
-              .map(it -> IntegerGene.of(it, 0, 5)).toList()),
-          IntegerChromosome.of(individual.areas().stream()
-              .map(it -> IntegerGene.of(it, 0, 6)).toList()),
-          IntegerChromosome.of(individual.kinds().stream()
-              .map(it -> IntegerGene.of(it, 0, 6)).toList()));
+      final var genotype = Genotype.of(IntegerChromosome.of(individual.genes().stream()
+          .map(it -> IntegerGene.of(it, 0, Crop.len())).toList()));
       return Phenotype.of(genotype, individual.generation());
     }
 

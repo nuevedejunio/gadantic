@@ -43,8 +43,7 @@ public class Gadantic {
 
   private void run() {
     log.info("Initializing application");
-    final var iterableFactory = PlotIterableFactory.standard();
-    final var plotDecoder = PlotDecoder.standard(iterableFactory);
+    final var plotDecoder = PlotDecoder.create();
 
     final var coefficients = new FitnessCoefficients(
         properties.getDouble("weights.water-retention"),
@@ -52,8 +51,10 @@ public class Gadantic {
         properties.getDouble("weights.quality-boost"),
         properties.getDouble("weights.harvest-increase"),
         properties.getDouble("weights.unique-crops"));
-    final var plotPhenotype = PlotPhenotype.standard(plotDecoder, coefficients);
-    final var constraint = PlotConstraint.create(iterableFactory);
+    final var plotPhenotype = PlotPhenotype.create(plotDecoder, coefficients);
+
+    final var iterableShuffler = Iterables.Shuffler.create();
+    final var constraint = PlotConstraint.create(iterableShuffler);
 
     final var encoding = plotPhenotype.encoding();
 

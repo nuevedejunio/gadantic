@@ -1,8 +1,10 @@
 package io.nuevedejun.gadantic;
 
 import io.jenetics.Genotype;
+import io.jenetics.IntegerChromosome;
 import io.jenetics.IntegerGene;
-import io.nuevedejun.gadantic.PlotIterableFactory.TiledCrop;
+import io.nuevedejun.gadantic.Iterables.Cell;
+import io.nuevedejun.gadantic.Iterables.Grid;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import io.nuevedejun.gadantic.PlotPhenotype.Perk;
 import lombok.AccessLevel;
@@ -12,12 +14,15 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.XSlf4j;
 
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static io.nuevedejun.gadantic.Iterables.coordinates;
+import static io.nuevedejun.gadantic.Iterables.grid;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.HARVEST;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
@@ -45,7 +50,7 @@ public interface PlotDecoder {
 
     private void buff(final RichCrop other) {
       if (this.crop != other.crop) {
-        other.perks.put(crop.perk(), other.perks.get(crop.perk()) + 1);
+        other.perks.merge(crop.perk(), 0, (v, _) -> v + 1);
       }
     }
 
@@ -56,29 +61,28 @@ public interface PlotDecoder {
 
   Plot decode(final Genotype<IntegerGene> genotype);
 
-  static Standard standard(final PlotIterableFactory iterableFactory) {
-    return new Standard(iterableFactory);
+  static Impl create() {
+    return new Impl();
   }
 
   @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
   @XSlf4j
-  class Standard implements PlotDecoder {
-    private final PlotIterableFactory iterableFactory;
+  class Impl implements PlotDecoder {
 
     @Override
     public Plot decode(final Genotype<IntegerGene> genotype) {
-      final RichCrop[][] array = new RichCrop[9][9];
-      for (final var tile : iterableFactory.tiles(genotype, true)) {
-        if (array[tile.x()][tile.y()] == null) {
-          fillCropTile(array, tile);
+      final Grid<RichCrop> plot = grid(Arrays.asList(new RichCrop[81]), 9);
+      final var chromosome = genotype.chromosome().as(IntegerChromosome.class);
+      final var geneGrid = grid(Arrays.stream(chromosome.toArray()).mapToObj(Crop::at).toList(), 9);
+      for (final var cell : geneGrid) {
+        if (plot.at(cell) == null) {
+          fillCropTile(plot, cell);
         }
       }
       final HashSet<RichCrop> set = HashSet.newHashSet(9 * 9);
-      for (int i = 0; i < array.length; i++) {
-        for (int j = 0; j < array[i].length; j++) {
-          applyBuffs(array, i, j);
-          set.add(array[i][j]);
-        }
+      for (final var cell : plot) {
+        applyBuffs(plot, cell);
+        set.add(cell.value());
       }
       log.trace("Set of decoded crops is: {}", set);
 
@@ -101,32 +105,28 @@ public interface PlotDecoder {
         }
       }
       final int distinct = set.stream().map(r -> r.crop).collect(Collectors.toSet()).size();
-      final String layoutUrl = createLayoutUrl(array);
+      final String layoutUrl = createLayoutUrl(plot);
       return new Plot(Set.of(set.toArray(new RichCrop[0])), water, weed, quality, harvest, distinct, layoutUrl);
     }
 
-    private void fillCropTile(final RichCrop[][] array, final TiledCrop tile) {
-      final var rich = new RichCrop(tile.crop(), tile.x(), tile.y());
-      for (int i = 0; i < tile.crop().size(); i++) {
-        for (int j = 0; j < tile.crop().size(); j++) {
-          array[tile.x() + i][tile.y() + j] = rich;
+    private void fillCropTile(final Grid<RichCrop> plot, final Cell<Crop> cell) {
+      final var rich = new RichCrop(cell.value(), cell.x(), cell.y());
+      for (final var c : coordinates(cell.value().size(), cell.value().size())) {
+        plot.set(cell.plus(c), rich);
+      }
+    }
+
+    private void applyBuffs(final Grid<RichCrop> crops, final Cell<RichCrop> cell) {
+      final var crop = cell.value();
+      for (final var c : coordinates(-1, 2, -1, 2)) {
+        if (c.x() != c.y() && c.x() != -c.y() && crops.contains(cell.plus(c))) {
+          final var target = crops.at(cell.plus(c));
+          crop.buff(target);
         }
       }
     }
 
-    private void applyBuffs(final RichCrop[][] crops, final int x, final int y) {
-      final var crop = crops[x][y];
-      for (int i = -1; i <= 1; i++) {
-        for (int j = -1; j <= 1; j++) {
-          if (i != j && i != -j && x + i >= 0 && x + i < 9 && y + j >= 0 && y + j < 9) {
-            final var target = crops[x + i][y + j];
-            crop.buff(target);
-          }
-        }
-      }
-    }
-
-    private String createLayoutUrl(final RichCrop[][] array) {
+    private String createLayoutUrl(final Grid<RichCrop> grid) {
       final StringBuilder sb = new StringBuilder()
           .append("https://palia-garden-planner.vercel.app/?layout=")
           .append("v0.4_D-111-111-111_CR");
@@ -136,7 +136,7 @@ public interface PlotDecoder {
           sb.append('-');
           for (int k = i; k < i + 3; k++) {
             for (int l = j; l < j + 3; l++) {
-              sb.append(mapLayout(array[l][k].crop));
+              sb.append(mapLayout(grid.at(l, k).crop));
             }
           }
         }
