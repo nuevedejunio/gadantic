@@ -20,7 +20,7 @@ import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
 @XSlf4j
 public record Plot(
     Set<RichCrop> crops,
-    int water, int weed, int quality, int harvest, int distinct, double effectivity,
+    int water, int weed, int quality, int harvest, int distinct, double efficiency,
     String layoutUrl) {
 
   private static final int CELL_WIDTH = 11;

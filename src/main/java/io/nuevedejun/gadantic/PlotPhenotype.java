@@ -3,7 +3,6 @@ package io.nuevedejun.gadantic;
 import io.jenetics.Genotype;
 import io.jenetics.IntegerChromosome;
 import io.jenetics.IntegerGene;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -48,7 +47,7 @@ public interface PlotPhenotype {
 
   record FitnessCoefficients(
       double water, double weed, double quality, double harvest,
-      double distinct, double effectivity) {
+      double distinct, double efficiency) {
   }
 
   static Impl create(final PlotDecoder plotDecoder,
@@ -56,11 +55,22 @@ public interface PlotPhenotype {
     return new Impl(plotDecoder, coefficients);
   }
 
-  @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
   @XSlf4j
   class Impl implements PlotPhenotype {
     private final PlotDecoder plotDecoder;
     private final FitnessCoefficients coefficients;
+    private final double normalize;
+
+    private Impl(final PlotDecoder plotDecoder, final FitnessCoefficients coefficients) {
+      this.plotDecoder = plotDecoder;
+      this.coefficients = coefficients;
+      this.normalize = coefficients.water()
+          + coefficients.weed()
+          + coefficients.quality()
+          + coefficients.harvest()
+          + coefficients.distinct()
+          + coefficients.efficiency();
+    }
 
     @Override
     public Genotype<IntegerGene> encoding() {
@@ -70,12 +80,12 @@ public interface PlotPhenotype {
     @Override
     public double fitness(final Genotype<IntegerGene> genotype) {
       final Plot plot = plotDecoder.decode(genotype);
-      return coefficients.water() * plot.water() / 81
+      return (coefficients.water() * plot.water() / 81
           + coefficients.weed() * plot.weed() / 81
           + coefficients.quality() * plot.quality() / 81
           + coefficients.harvest() * plot.harvest() / 81
           + coefficients.distinct() * plot.distinct() / Crop.len()
-          + coefficients.effectivity() * plot.effectivity();
+          + coefficients.efficiency() * plot.efficiency()) / normalize;
     }
   }
 }

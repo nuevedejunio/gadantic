@@ -55,8 +55,10 @@ public interface PlotDecoder {
      */
     private boolean buff(final RichCrop other) {
       if (this.crop != other.crop) {
-        other.perks.merge(crop.perk(), 0, (v, _) -> v + 1);
-        return true;
+        final int current = other.perks.get(crop.perk());
+        final boolean affected = current < other.crop().size();
+        other.perks.put(crop.perk(), current + 1);
+        return affected;
       }
       return false;
     }
@@ -98,7 +100,7 @@ public interface PlotDecoder {
       int weed = 0;
       int quality = 0;
       int harvest = 0;
-      int available = 0;
+      int available = -36;
       for (final var crop : set) {
         if (crop.has(WATER)) {
           water += crop.crop.size() * crop.crop.size();
@@ -114,11 +116,11 @@ public interface PlotDecoder {
         }
         available += 4 * crop.crop().size();
       }
-      final double effectivity = (double) applied / available;
+      final double efficiency = (double) applied / available;
       final int distinct = set.stream().map(r -> r.crop).collect(Collectors.toSet()).size();
       final String layoutUrl = createLayoutUrl(plot);
       return new Plot(Set.of(set.toArray(new RichCrop[0])),
-          water, weed, quality, harvest, distinct, effectivity, layoutUrl);
+          water, weed, quality, harvest, distinct, efficiency, layoutUrl);
     }
 
     private void fillCropTile(final Grid<RichCrop> plot, final Cell<Crop> cell) {
