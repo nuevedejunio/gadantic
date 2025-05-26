@@ -48,10 +48,17 @@ public interface PlotDecoder {
         QUALITY, 0,
         HARVEST, 0));
 
-    private void buff(final RichCrop other) {
+    /**
+     * Apply this crop's perk to a target crop.
+     *
+     * @return {@code true} is the perk was applies; {@code false} otherwise
+     */
+    private boolean buff(final RichCrop other) {
       if (this.crop != other.crop) {
         other.perks.merge(crop.perk(), 0, (v, _) -> v + 1);
+        return true;
       }
+      return false;
     }
 
     public boolean has(final Perk perk) {
@@ -79,9 +86,10 @@ public interface PlotDecoder {
           fillCropTile(plot, cell);
         }
       }
+      int applied = 0;
       final HashSet<RichCrop> set = HashSet.newHashSet(9 * 9);
       for (final var cell : plot) {
-        applyBuffs(plot, cell);
+        applied += applyBuffs(plot, cell);
         set.add(cell.value());
       }
       log.trace("Set of decoded crops is: {}", set);
@@ -90,6 +98,7 @@ public interface PlotDecoder {
       int weed = 0;
       int quality = 0;
       int harvest = 0;
+      int available = 0;
       for (final var crop : set) {
         if (crop.has(WATER)) {
           water += crop.crop.size() * crop.crop.size();
@@ -103,10 +112,13 @@ public interface PlotDecoder {
         if (crop.has(HARVEST)) {
           harvest += crop.crop.size() * crop.crop.size();
         }
+        available += 4 * crop.crop().size();
       }
+      final double effectivity = (double) applied / available;
       final int distinct = set.stream().map(r -> r.crop).collect(Collectors.toSet()).size();
       final String layoutUrl = createLayoutUrl(plot);
-      return new Plot(Set.of(set.toArray(new RichCrop[0])), water, weed, quality, harvest, distinct, layoutUrl);
+      return new Plot(Set.of(set.toArray(new RichCrop[0])),
+          water, weed, quality, harvest, distinct, effectivity, layoutUrl);
     }
 
     private void fillCropTile(final Grid<RichCrop> plot, final Cell<Crop> cell) {
@@ -116,14 +128,18 @@ public interface PlotDecoder {
       }
     }
 
-    private void applyBuffs(final Grid<RichCrop> crops, final Cell<RichCrop> cell) {
+    private int applyBuffs(final Grid<RichCrop> crops, final Cell<RichCrop> cell) {
       final var crop = cell.value();
+      int count = 0;
       for (final var c : coordinates(-1, 2, -1, 2)) {
         if (c.x() != c.y() && c.x() != -c.y() && crops.contains(cell.plus(c))) {
           final var target = crops.at(cell.plus(c));
-          crop.buff(target);
+          if (crop.buff(target)) {
+            count++;
+          }
         }
       }
+      return count;
     }
 
     private String createLayoutUrl(final Grid<RichCrop> grid) {

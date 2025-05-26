@@ -29,6 +29,7 @@ import static io.nuevedejun.gadantic.PlotPhenotype.Crop.TOMATOES;
 import static io.nuevedejun.gadantic.PlotPhenotype.Crop.WHEAT;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.argumentSet;
 
 class PlotDecoderTest {
@@ -85,10 +86,10 @@ class PlotDecoderTest {
 
     return List.of(
         argumentSet("Few distinct crops; 100% quality ;)",
-            fewCropsArray, fewCropsSet, 0, 17, 81, 36, 4,
+            fewCropsArray, fewCropsSet, 0, 17, 81, 36, 4, 0.697674,
             "https://palia-garden-planner.vercel.app/?layout=v0.4_D-111-111-111_CR-AAAAAAAAA-CoPmPmCoPmPmOCoCo-AAAAAAAAA-PmPmCoPmPmCoCoCoO-AAAAAAAAA-OCoCoCoPmPmCoPmPm-AAAAAAAAA-CoCoOPmPmCoPmPmCo-AAAAAAAAA"),
         argumentSet("All crops; varied measurements",
-            allCropsArray, allCropsSet, 9, 8, 27, 24, 15,
+            allCropsArray, allCropsSet, 9, 8, 27, 24, 15, 0.472972,
             "https://palia-garden-planner.vercel.app/?layout=v0.4_D-111-111-111_CR-TPCbCoBBTBB-RWCrBtBtSBtBtS-COBkSPmPmSPmPm-AAAAAAAAA-AAAAAAAAA-AAAAAAAAA-AAAAAAAAA-AAAAAAAAA-AAAAAAAAA"));
   }
 
@@ -96,7 +97,7 @@ class PlotDecoderTest {
   @MethodSource("decodeTestCases")
   void testDecode(final int[] array, final Set<Cell<Crop>> expectedCrops, final int expectedWater,
       final int expectedWeed, final int expectedQuality, final int expectedHarvest,
-      final int expectedDistinct, final String expectedUrl) {
+      final int expectedDistinct, final double expectedEffectivity, final String expectedUrl) {
 
     final Genotype<IntegerGene> genotype = encode(array).genotype();
 
@@ -111,6 +112,7 @@ class PlotDecoderTest {
     assertEquals(expectedQuality, result.quality());
     assertEquals(expectedHarvest, result.harvest());
     assertEquals(expectedDistinct, result.distinct());
+    assertTrue(Math.abs(expectedEffectivity - result.effectivity()) < 1e-5);
     assertEquals(expectedUrl, result.layoutUrl());
   }
 }

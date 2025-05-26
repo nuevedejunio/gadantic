@@ -48,7 +48,7 @@ public interface PlotPhenotype {
 
   record FitnessCoefficients(
       double water, double weed, double quality, double harvest,
-      double distinct) {
+      double distinct, double effectivity) {
   }
 
   static Impl create(final PlotDecoder plotDecoder,
@@ -74,7 +74,8 @@ public interface PlotPhenotype {
           + coefficients.weed() * plot.weed() / 81
           + coefficients.quality() * plot.quality() / 81
           + coefficients.harvest() * plot.harvest() / 81
-          + coefficients.distinct() * plot.distinct() / Crop.len();
+          + coefficients.distinct() * plot.distinct() / Crop.len()
+          + coefficients.effectivity() * plot.effectivity();
     }
   }
 }

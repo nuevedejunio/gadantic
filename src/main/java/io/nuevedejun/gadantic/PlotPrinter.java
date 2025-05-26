@@ -79,6 +79,8 @@ public interface PlotPrinter {
       sb.append("Unique crops: (").append(plot.distinct()).append('|')
           .append(percent(plot.distinct(), Crop.len())).append("%)").append('\n');
 
+      sb.append("Buff effectivity: ").append(String.format("%2.5f", plot.effectivity()))
+          .append(" | ");
       individual.fitnessOptional().ifPresent(fitness ->
           sb.append("Fitness: ").append(String.format("%2.5f", fitness)).append(" | "));
       sb.append("Generation: ").append(individual.generation()).append('\n');

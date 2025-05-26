@@ -50,7 +50,8 @@ public class Gadantic {
         properties.getDouble("weights.weed-prevention"),
         properties.getDouble("weights.quality-boost"),
         properties.getDouble("weights.harvest-increase"),
-        properties.getDouble("weights.unique-crops"));
+        properties.getDouble("weights.unique-crops"),
+        properties.getDouble("weights.buff-effectivity"));
     final var plotPhenotype = PlotPhenotype.create(plotDecoder, coefficients);
 
     final var iterableShuffler = Iterables.Shuffler.create();
