@@ -72,7 +72,8 @@ public class Gadantic {
             new UniformCrossover<>(
                 properties.getDouble("ga.crossover-probability"),
                 properties.getDouble("ga.swap-probability")),
-            new Mutator<>(properties.getDouble("ga.mutation-probability")))
+            new Mutator<>(properties.getDouble("ga.mutation-probability")),
+            new ReplacementMutator(properties.getDouble("ga.replacement-probability")))
         .build();
 
     try (final var persistence = EvolutionPersistence.file(
