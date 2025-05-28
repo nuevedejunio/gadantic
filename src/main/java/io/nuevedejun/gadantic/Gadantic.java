@@ -4,7 +4,7 @@ import io.jenetics.IntegerGene;
 import io.jenetics.Mutator;
 import io.jenetics.RouletteWheelSelector;
 import io.jenetics.ShuffleMutator;
-import io.jenetics.StochasticUniversalSelector;
+import io.jenetics.TournamentSelector;
 import io.jenetics.UniformCrossover;
 import io.jenetics.engine.Engine;
 import io.jenetics.engine.EvolutionResult;
@@ -65,7 +65,7 @@ public class Gadantic {
         .constraint(constraint)
         .populationSize(properties.getInt("ga.population-size"))
         .offspringFraction(properties.getDouble("ga.offspring-fraction"))
-        .survivorsSelector(new StochasticUniversalSelector<>())
+        .survivorsSelector(new TournamentSelector<>(properties.getInt("ga.tournament-size")))
         .offspringSelector(new RouletteWheelSelector<>())
         .alterers(
             new ShuffleMutator<>(properties.getDouble("ga.shuffle-probability")),

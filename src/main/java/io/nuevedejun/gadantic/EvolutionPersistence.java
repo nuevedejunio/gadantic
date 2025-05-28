@@ -39,6 +39,7 @@ public interface EvolutionPersistence {
 
   @XSlf4j
   class File implements EvolutionPersistence, AutoCloseable {
+    private static final int OUTPUT_BUFFER_SIZE = 65536;
 
     record Population(List<Individual> individuals, long generation) {
       public static Population empty() {
@@ -108,7 +109,8 @@ public interface EvolutionPersistence {
       final var format = new Population(individuals, evolutionResult.generation());
 
       CompletableFuture.runAsync(() -> {
-        try (final var out = new BufferedOutputStream(Files.newOutputStream(file))) {
+        try (final var out = new BufferedOutputStream(Files.newOutputStream(file),
+            OUTPUT_BUFFER_SIZE)) {
           fury.serializeJavaObject(out, format);
         } catch (final IOException ioe) {
           log.warn("An exception prevented writing to file {}. State was not saved.", file, ioe);
