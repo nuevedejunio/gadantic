@@ -13,6 +13,9 @@ import io.jenetics.engine.EvolutionStream;
 import io.nuevedejun.gadantic.PlotPhenotype.FitnessCoefficients;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.QuarkusApplication;
+import io.quarkus.runtime.ShutdownEvent;
+import io.quarkus.runtime.annotations.QuarkusMain;
+import jakarta.enterprise.event.Observes;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -22,6 +25,7 @@ import java.util.stream.Stream;
 
 import static io.nuevedejun.gadantic.Iterables.arr;
 
+@QuarkusMain
 public class Gadantic implements QuarkusApplication {
   public static final String LOG_FQCN = Log.class.getName();
 
@@ -102,6 +106,10 @@ public class Gadantic implements QuarkusApplication {
     } else {
       return ongoing;
     }
+  }
+
+  void onStop(@Observes final ShutdownEvent ignored) {
+    Gadantic.shutdown();
   }
 
   public static void shutdown() {
