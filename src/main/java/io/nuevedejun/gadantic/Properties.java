@@ -1,12 +1,15 @@
 package io.nuevedejun.gadantic;
 
-import lombok.extern.slf4j.XSlf4j;
+import io.quarkus.logging.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
+
+import static io.nuevedejun.gadantic.Gadantic.LOG_FQCN;
+import static io.nuevedejun.gadantic.Iterables.arr;
 
 public interface Properties {
 
@@ -23,7 +26,6 @@ public interface Properties {
   }
 
   /** Obtains property values from the system properties. */
-  @XSlf4j
   class File implements Properties {
     private final java.util.Properties props;
 
@@ -38,16 +40,16 @@ public interface Properties {
       try (final InputStream ain = Files.newInputStream(Paths.get("application.properties"))) {
         props.load(ain);
       } catch (final NoSuchFileException e) {
-        log.info("File application.properties was not found in working directory. "
+        Log.info("File application.properties was not found in working directory. "
             + "Default properties will be used.");
       } catch (final IOException e) {
-        log.warn("An exception prevented reading file application.properties. "
+        Log.warn("An exception prevented reading file application.properties. "
             + "Default properties will be used.", e);
       }
     }
 
     private <T> T log(final String key, final T value) {
-      log.info("Using property {}={}", key, value);
+      Log.info(LOG_FQCN, "Using property {0}={1}", arr(key, value), null);
       return value;
     }
 

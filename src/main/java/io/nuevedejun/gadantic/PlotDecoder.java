@@ -7,12 +7,7 @@ import io.nuevedejun.gadantic.Iterables.Cell;
 import io.nuevedejun.gadantic.Iterables.Grid;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import io.nuevedejun.gadantic.PlotPhenotype.Perk;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.Accessors;
-import lombok.extern.slf4j.XSlf4j;
+import io.quarkus.logging.Log;
 
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -21,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static io.nuevedejun.gadantic.Gadantic.LOG_FQCN;
+import static io.nuevedejun.gadantic.Iterables.arr;
 import static io.nuevedejun.gadantic.Iterables.coordinates;
 import static io.nuevedejun.gadantic.Iterables.grid;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.HARVEST;
@@ -30,23 +27,22 @@ import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
 
 public interface PlotDecoder {
 
-  @RequiredArgsConstructor
-  @Accessors(fluent = true)
-  @ToString
   class RichCrop {
-    @Getter
-    private final Crop crop;
-    @Getter
-    private final int x;
-    @Getter
-    private final int y;
+    final Crop crop;
+    final int x;
+    final int y;
 
-    @ToString.Exclude
     private final Map<Perk, Integer> perks = new EnumMap<>(Map.of(
         WATER, 0,
         WEED, 0,
         QUALITY, 0,
         HARVEST, 0));
+
+    public RichCrop(final Crop crop, final int x, final int y) {
+      this.crop = crop;
+      this.x = x;
+      this.y = y;
+    }
 
     /**
      * Apply this crop's perk to a target crop.
@@ -55,16 +51,21 @@ public interface PlotDecoder {
      */
     private boolean buff(final RichCrop other) {
       if (this.crop != other.crop) {
-        final int current = other.perks.get(crop.perk());
-        final boolean affected = current < other.crop().size();
-        other.perks.put(crop.perk(), current + 1);
+        final int current = other.perks.get(crop.perk);
+        final boolean affected = current < other.crop.size;
+        other.perks.put(crop.perk, current + 1);
         return affected;
       }
       return false;
     }
 
     public boolean has(final Perk perk) {
-      return perks.get(perk) >= crop.size();
+      return perks.get(perk) >= crop.size;
+    }
+
+    @Override
+    public String toString() {
+      return "RichCrop{crop=" + crop + ", x=" + x + ", y=" + y + '}';
     }
   }
 
@@ -74,9 +75,8 @@ public interface PlotDecoder {
     return new Impl();
   }
 
-  @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-  @XSlf4j
   class Impl implements PlotDecoder {
+    private Impl() {}
 
     @Override
     public Plot decode(final Genotype<IntegerGene> genotype) {
@@ -94,7 +94,7 @@ public interface PlotDecoder {
         applied += applyBuffs(plot, cell);
         set.add(cell.value());
       }
-      log.trace("Set of decoded crops is: {}", set);
+      Log.trace(LOG_FQCN, "Set of decoded crops is: {0}", arr(set), null);
 
       int water = 0;
       int weed = 0;
@@ -103,18 +103,18 @@ public interface PlotDecoder {
       int available = -36;
       for (final var crop : set) {
         if (crop.has(WATER)) {
-          water += crop.crop.size() * crop.crop.size();
+          water += crop.crop.size * crop.crop.size;
         }
         if (crop.has(WEED)) {
-          weed += crop.crop.size() * crop.crop.size();
+          weed += crop.crop.size * crop.crop.size;
         }
         if (crop.has(QUALITY)) {
-          quality += crop.crop.size() * crop.crop.size();
+          quality += crop.crop.size * crop.crop.size;
         }
         if (crop.has(HARVEST)) {
-          harvest += crop.crop.size() * crop.crop.size();
+          harvest += crop.crop.size * crop.crop.size;
         }
-        available += 4 * crop.crop().size();
+        available += 4 * crop.crop.size;
       }
       final double efficiency = (double) applied / available;
       final int distinct = set.stream().map(r -> r.crop).collect(Collectors.toSet()).size();
@@ -125,7 +125,7 @@ public interface PlotDecoder {
 
     private void fillCropTile(final Grid<RichCrop> plot, final Cell<Crop> cell) {
       final var rich = new RichCrop(cell.value(), cell.x(), cell.y());
-      for (final var c : coordinates(cell.value().size(), cell.value().size())) {
+      for (final var c : coordinates(cell.value().size, cell.value().size)) {
         plot.set(cell.plus(c), rich);
       }
     }

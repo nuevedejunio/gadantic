@@ -104,7 +104,7 @@ class PlotDecoderTest {
     final Plot result = decoder.decode(genotype);
 
     final var actualCrops = result.crops().stream()
-        .map(rc -> new Cell<>(rc.x(), rc.y(), rc.crop()))
+        .map(rc -> new Cell<>(rc.x, rc.y, rc.crop))
         .collect(toSet());
     assertEquals(expectedCrops, actualCrops);
     assertEquals(expectedWater, result.water());

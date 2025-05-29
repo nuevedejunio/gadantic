@@ -11,7 +11,7 @@ import io.jenetics.engine.EvolutionResult;
 import io.jenetics.engine.EvolutionStart;
 import io.jenetics.util.ISeq;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
-import lombok.extern.slf4j.XSlf4j;
+import io.quarkus.logging.Log;
 import org.apache.fury.Fury;
 import org.apache.fury.config.Language;
 import org.apache.fury.io.FuryInputStream;
@@ -26,6 +26,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static io.nuevedejun.gadantic.Gadantic.LOG_FQCN;
+import static io.nuevedejun.gadantic.Iterables.arr;
+
 public interface EvolutionPersistence {
 
   static File file(final Path file,
@@ -37,7 +40,6 @@ public interface EvolutionPersistence {
 
   void write(EvolutionResult<IntegerGene, Double> individuals);
 
-  @XSlf4j
   class File implements EvolutionPersistence, AutoCloseable {
     private static final int OUTPUT_BUFFER_SIZE = 65536;
 
@@ -78,19 +80,20 @@ public interface EvolutionPersistence {
         try (final var in = new FuryInputStream(Files.newInputStream(file))) {
           return fury.deserializeJavaObject(in, Population.class);
         } catch (final NoSuchFileException e) {
-          log.info("File {} was not found. Evolution will start from scratch.", file);
+          Log.info(LOG_FQCN, "File {0} was not found. Evolution will start from scratch",
+              arr(file), null);
           return Population.empty();
         } catch (final IOException | IndexOutOfBoundsException e) {
-          log.warn("An exception prevented reading file {}. "
-              + "Evolution will start from scratch.", file, e);
+          Log.warn(LOG_FQCN, "An exception prevented reading file {0}. "
+              + "Evolution will start from scratch.", arr(file), e);
           return Population.empty();
         }
       }, executor).join();
 
       final Population actual;
       if (population == null) {
-        log.warn("Deserialized format is null. Serialization may have been corrupted,"
-            + " or format changed since last execution. Evolution will start from scratch.");
+        Log.warn("Deserialized format is null. Serialization may have been corrupted,"
+            + " or format changed since last execution. Evolution will start from scratch");
         actual = Population.empty();
       } else {
         actual = population;
@@ -113,7 +116,8 @@ public interface EvolutionPersistence {
             OUTPUT_BUFFER_SIZE)) {
           fury.serializeJavaObject(out, format);
         } catch (final IOException ioe) {
-          log.warn("An exception prevented writing to file {}. State was not saved.", file, ioe);
+          Log.warn(LOG_FQCN, "An exception prevented writing to file {0}. State was not saved.",
+              arr(file), ioe);
         }
       }, executor).join();
     }

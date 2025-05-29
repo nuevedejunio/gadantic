@@ -188,4 +188,15 @@ public final class Iterables {
           "lower limit " + lower + " is greater than upper limit " + upper);
     }
   }
+
+  /**
+   * Shortcut to create an array of objects.
+   *
+   * @param args the objects provided as a vararg parameter
+   * @return the vararg array
+   */
+  @SafeVarargs
+  public static <T> T[] arr(final T... args) {
+    return args;
+  }
 }

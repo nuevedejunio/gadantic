@@ -8,22 +8,25 @@ import io.jenetics.engine.Constraint;
 import io.nuevedejun.gadantic.Iterables.Cell;
 import io.nuevedejun.gadantic.Iterables.Grid;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.XSlf4j;
+import io.quarkus.logging.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static io.jenetics.util.RandomRegistry.random;
+import static io.nuevedejun.gadantic.Gadantic.LOG_FQCN;
+import static io.nuevedejun.gadantic.Iterables.arr;
 import static io.nuevedejun.gadantic.Iterables.coordinates;
 import static io.nuevedejun.gadantic.Iterables.grid;
 import static java.lang.Math.min;
 
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-@XSlf4j
 public class PlotConstraint implements Constraint<IntegerGene, Double> {
+  private final Iterables.Shuffler shuffler;
+
+  private PlotConstraint(final Iterables.Shuffler shuffler) {
+    this.shuffler = shuffler;
+  }
 
   public static PlotConstraint create(final Iterables.Shuffler shuffler) {
     return new PlotConstraint(shuffler);
@@ -35,7 +38,7 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
     }
 
     private static Square of(final Cell<Crop> tile) {
-      return new Square(tile.x(), tile.y(), tile.value().size());
+      return new Square(tile.x(), tile.y(), tile.value().size);
     }
 
     /**
@@ -72,12 +75,9 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
     OVERRIDE, REJECT, IGNORE
   }
 
-
-  private final Iterables.Shuffler shuffler;
-
   @Override
   public boolean test(final Phenotype<IntegerGene, Double> individual) {
-    log.entry(pretty(individual));
+    Log.trace(LOG_FQCN, "Testing individual: {0}", arr(pretty(individual)), null);
 
     final IntegerChromosome chromosome = individual.genotype().chromosome()
         .as(IntegerChromosome.class);
@@ -87,7 +87,8 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
       final Square square = Square.of(cell);
       switch (checkCropTile(grid, square)) {
         case REJECT:
-          return log.exit(false);
+          Log.trace("Individual was rejected");
+          return false;
         case OVERRIDE:
           fillMatrix(grid, square);
           break;
@@ -96,14 +97,15 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
           break;
       }
     }
-    log.atTrace().log(() -> "Approved plot: " + pretty(individual.genotype()));
-    return log.exit(true);
+    Log.trace("Individual was approved");
+    return true;
   }
 
   @Override
   public Phenotype<IntegerGene, Double> repair(
       final Phenotype<IntegerGene, Double> individual, final long generation) {
-    log.entry(pretty(individual), generation);
+    Log.trace(LOG_FQCN, "Repairing individual: {0}; at generation {1}",
+        arr(pretty(individual), generation), null);
 
     final IntegerChromosome chromosome = individual.genotype().chromosome()
         .as(IntegerChromosome.class);
@@ -114,12 +116,12 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
     for (final var cell : shuffler.shuffle(cropGrid)) {
       final Square square = Square.of(cell);
       final int valid = validCropSize(grid, square);
-      log.trace("Valid size for {} is {}", square, valid);
+      Log.trace(LOG_FQCN, "Valid size for {0} is {1}", arr(square, valid), null);
 
       Crop replacement = cell.value();
       boolean replace = false;
-      while (replacement.size() > valid) {
-        log.trace("Crop {} is invalid in position ({}, {}).", replacement, cell.x(), cell.y());
+      while (replacement.size > valid) {
+        Log.trace(LOG_FQCN, "Crop {0} is invalid in place of {1}", arr(replacement, cell), null);
         replacement = Crop.at(random().nextInt(Crop.len()));
         replace = true;
       }
@@ -133,8 +135,8 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
       changes.forEach(change -> arr[change.pos()] = change.value());
       return arr;
     }));
-    log.atTrace().log(() -> "Repaired plot: " + pretty(fixed));
-    return log.exit(Phenotype.of(fixed, generation));
+    Log.trace(LOG_FQCN, "Repaired plot: {0}", arr(pretty(fixed)), null);
+    return Phenotype.of(fixed, generation);
   }
 
   /**
@@ -212,7 +214,8 @@ public class PlotConstraint implements Constraint<IntegerGene, Double> {
     int valid = min(square.size(), min(remainRight, remainDown));
     CheckResult result;
     do {
-      log.trace("Attempting to fit {}. Current [valid] is {}", square, valid);
+      Log.trace(LOG_FQCN, "Attempting to fit {0}. Current [valid] is {1}",
+          arr(square, valid), null);
       result = checkCropTile(grid, square.withSize(valid));
       valid--;
     } while (result == CheckResult.REJECT);

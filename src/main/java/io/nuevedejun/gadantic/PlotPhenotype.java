@@ -3,10 +3,6 @@ package io.nuevedejun.gadantic;
 import io.jenetics.Genotype;
 import io.jenetics.IntegerChromosome;
 import io.jenetics.IntegerGene;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
-import lombok.extern.slf4j.XSlf4j;
 
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.HARVEST;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
@@ -19,9 +15,6 @@ public interface PlotPhenotype {
 
   double fitness(Genotype<IntegerGene> genotype);
 
-  @RequiredArgsConstructor
-  @Getter
-  @Accessors(fluent = true)
   enum Crop {
     // single-tile crops
     TOMATOES(1, WATER), POTATOES(1, WATER), CABBAGE(1, WATER), RICE(1, HARVEST), WHEAT(1, HARVEST),
@@ -31,8 +24,13 @@ public interface PlotPhenotype {
     // 9-tile crops
     APPLES(3, HARVEST);
 
-    private final int size;
-    private final Perk perk;
+    final int size;
+    final Perk perk;
+
+    Crop(final int size, final Perk perk) {
+      this.size = size;
+      this.perk = perk;
+    }
 
     private static final Crop[] CROPS = values();
 
@@ -55,7 +53,6 @@ public interface PlotPhenotype {
     return new Impl(plotDecoder, coefficients);
   }
 
-  @XSlf4j
   class Impl implements PlotPhenotype {
     private final PlotDecoder plotDecoder;
     private final FitnessCoefficients coefficients;

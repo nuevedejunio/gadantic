@@ -2,22 +2,22 @@ package io.nuevedejun.gadantic;
 
 import io.nuevedejun.gadantic.PlotDecoder.RichCrop;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.XSlf4j;
+import io.quarkus.logging.Log;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.nuevedejun.gadantic.Gadantic.LOG_FQCN;
+import static io.nuevedejun.gadantic.Iterables.arr;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.HARVEST;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 
-@XSlf4j
 public record Plot(
     Set<RichCrop> crops,
     int water, int weed, int quality, int harvest, int distinct, double efficiency,
@@ -38,22 +38,24 @@ public record Plot(
       HAS_QUALITY + " quality",
       HAS_HARVEST + " harvest");
 
-  @RequiredArgsConstructor
   private enum Border {
     UPPER_LEFT('┌'), UPPER_RIGHT('┐'), LOWER_RIGHT('┘'), LOWER_LEFT('└'),
     LEFT_T('├'), UPPER_T('┬'), RIGHT_T('┤'), LOWER_T('┴'),
     CROSS('┼'), DASH('─'), PIPE('│'),
     BLANK(' ');
 
-    private static final Map<Character, Border> MAP = Map.copyOf(Stream.of(Border.values())
-        .collect(Collectors.toMap(b -> b.character, Function.identity())));
+    private final char character;
+
+    Border(final char character) {this.character = character;}
+
+    private static final Map<Character, Border> MAP = Stream.of(Border.values())
+        .collect(toUnmodifiableMap(b -> b.character, Function.identity()));
 
     private static Border from(final char c) {
-      log.entry((int) c);
-      return log.exit(MAP.get(c));
+      final Border border = MAP.get(c);
+      Log.trace(LOG_FQCN, "Border.from({0}[{1,number,#}]) -> {2}", arr(c, (int) c, border), null);
+      return border;
     }
-
-    private final char character;
   }
 
   public String tableString() {
@@ -66,18 +68,18 @@ public record Plot(
     sb.deleteCharAt(sb.length() - 1);
 
     for (final var annotated : crops) {
-      log.trace("Drawing cell of {}", annotated);
+      Log.trace(LOG_FQCN, "Drawing cell of {0}", arr(annotated), null);
 
-      final int start = annotated.x() * CELL_WIDTH + 2 * annotated.y() * LINE_LEN;
-      final Crop crop = annotated.crop();
-      drawCell(sb, start, crop.size());
+      final int start = annotated.x * CELL_WIDTH + 2 * annotated.y * LINE_LEN;
+      final Crop crop = annotated.crop;
+      drawCell(sb, start, crop.size);
 
       final String name = crop.name();
       final String badges = (annotated.has(WATER) ? HAS_WATER : "")
           + (annotated.has(WEED) ? HAS_WEED : "")
           + (annotated.has(QUALITY) ? HAS_QUALITY : "")
           + (annotated.has(HARVEST) ? HAS_HARVEST : "");
-      final int desired = crop.size() * CELL_WIDTH - 1 - badges.length();
+      final int desired = crop.size * CELL_WIDTH - 1 - badges.length();
       final String format = "%-" + desired + "." + desired + "s%s";
       final String text = String.format(format, name, badges);
       replace(sb, start + LINE_LEN + 1, text);

@@ -5,7 +5,7 @@ import io.jenetics.IntegerGene;
 import io.jenetics.Phenotype;
 import io.jenetics.engine.EvolutionResult;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
-import lombok.extern.slf4j.XSlf4j;
+import io.quarkus.logging.Log;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,7 +13,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-public interface PlotPrinter {
+import static io.nuevedejun.gadantic.Gadantic.LOG_FQCN;
+import static io.nuevedejun.gadantic.Iterables.arr;
+
+public interface PlotLogger {
 
   static Standard standard(final PlotDecoder decoder, final long delayMillis) {
     return new Standard(decoder, delayMillis);
@@ -23,8 +26,7 @@ public interface PlotPrinter {
 
   void print(Phenotype<IntegerGene, Double> individual);
 
-  @XSlf4j
-  class Standard implements PlotPrinter, AutoCloseable {
+  class Standard implements PlotLogger, AutoCloseable {
 
     private final PlotDecoder decoder;
 
@@ -87,7 +89,7 @@ public interface PlotPrinter {
 
       sb.append("Garden Planner: ").append(plot.layoutUrl());
 
-      log.info("Best individual found\n{}", sb);
+      Log.info(LOG_FQCN, "Best individual found\n{0}", arr(sb), null);
     }
 
     private StringBuilder appendPercent(final StringBuilder sb, final int count,
