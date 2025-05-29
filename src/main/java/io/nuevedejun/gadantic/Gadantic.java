@@ -16,22 +16,25 @@ import io.quarkus.runtime.QuarkusApplication;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static io.nuevedejun.gadantic.Iterables.arr;
 
 public class Gadantic implements QuarkusApplication {
-  public final static String LOG_FQCN = Log.class.getName();
+  public static final String LOG_FQCN = Log.class.getName();
 
   private static final Properties PROPERTIES = Properties.file();
 
-  private static boolean stopped = false;
-  private static Thread mainThread = null;
+  private static final AtomicBoolean STOPPED = new AtomicBoolean(false);
+  private static final AtomicReference<Thread> MAIN_THREAD =
+      new AtomicReference<>(Thread.currentThread());
 
   @Override
   public int run(final String[] args) {
     Log.info("Initializing application");
-    mainThread = Thread.currentThread();
+    MAIN_THREAD.set(Thread.currentThread());
 
     final var plotDecoder = PlotDecoder.create();
 
@@ -92,7 +95,7 @@ public class Gadantic implements QuarkusApplication {
 
   private Stream<EvolutionResult<IntegerGene, Double>> limitStream(
       final EvolutionStream<IntegerGene, Double> stream) {
-    final var ongoing = stream.limit(r -> !stopped);
+    final var ongoing = stream.limit(r -> !STOPPED.get());
     final long generations = Gadantic.PROPERTIES.getLong("ga.generations");
     if (generations >= 0) {
       return ongoing.limit(generations);
@@ -104,9 +107,9 @@ public class Gadantic implements QuarkusApplication {
   public static void shutdown() {
     try {
       Log.info("Initiating controlled application shutdown");
-      stopped = true;
+      STOPPED.set(true);
       final long shutdownMillis = PROPERTIES.getInt("shutdown-wait-millis");
-      if (!mainThread.join(Duration.ofMillis(shutdownMillis))) {
+      if (!MAIN_THREAD.get().join(Duration.ofMillis(shutdownMillis))) {
         Log.warn(LOG_FQCN, "The main thread did not complete within {0} ms. Data may be lost",
             arr(shutdownMillis), null);
       }
