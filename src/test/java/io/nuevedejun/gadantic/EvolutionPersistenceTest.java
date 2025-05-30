@@ -36,7 +36,7 @@ class EvolutionPersistenceTest {
         Optimize.MAXIMUM, population, 1, EvolutionDurations.ZERO, 0, 0, 0);
 
     final EvolutionStart<IntegerGene, Double> result;
-    try (final EvolutionPersistence.File persistence = EvolutionPersistence.file(
+    try (final EvolutionPersistence.File persistence = new EvolutionPersistence.File(
         temp.resolve("gadantic.sav"),
         new MonteCarloSelector<>(), 10)) {
       persistence.write(evolution);
@@ -64,7 +64,7 @@ class EvolutionPersistenceTest {
   @Test
   void testPersistenceNoFilePresent() {
     final EvolutionStart<IntegerGene, Double> result;
-    try (final EvolutionPersistence.File persistence = EvolutionPersistence.file(
+    try (final EvolutionPersistence.File persistence = new EvolutionPersistence.File(
         temp.resolve("gadantic.sav"),
         new MonteCarloSelector<>(), 10)) {
       result = persistence.read();
@@ -79,7 +79,7 @@ class EvolutionPersistenceTest {
     Files.createFile(source);
 
     final EvolutionStart<IntegerGene, Double> result;
-    try (final EvolutionPersistence.File persistence = EvolutionPersistence.file(source,
+    try (final EvolutionPersistence.File persistence = new EvolutionPersistence.File(source,
         new MonteCarloSelector<>(), 10)) {
       result = persistence.read();
     }

@@ -6,6 +6,9 @@ import io.jenetics.Phenotype;
 import io.jenetics.engine.EvolutionResult;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import io.quarkus.logging.Log;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -16,28 +19,27 @@ import java.util.concurrent.atomic.AtomicReference;
 import static io.nuevedejun.gadantic.Gadantic.LOG_FQCN;
 import static io.nuevedejun.gadantic.Iterables.arr;
 
-public interface PlotLogger {
-
-  static Standard standard(final PlotDecoder decoder, final long delayMillis) {
-    return new Standard(decoder, delayMillis);
-  }
+public interface PlotPrinter {
 
   void accept(EvolutionResult<IntegerGene, Double> result);
 
   void print(Phenotype<IntegerGene, Double> individual);
 
-  class Standard implements PlotLogger, AutoCloseable {
+  @ApplicationScoped
+  class Impl implements PlotPrinter, AutoCloseable {
 
     private final PlotDecoder decoder;
-
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-        Thread.ofVirtual().name("plot-printer-", 0).factory());
+    private final ScheduledExecutorService executor;
 
     private final AtomicReference<Phenotype<IntegerGene, Double>> ref = new AtomicReference<>();
     private final AtomicLong best = new AtomicLong(Double.doubleToRawLongBits(0));
 
-    private Standard(final PlotDecoder decoder, final long delayMillis) {
+    Impl(final PlotDecoder decoder,
+        @ConfigProperty(name = "log-delay-millis", defaultValue = "500") final long delayMillis) {
       this.decoder = decoder;
+
+      executor = Executors.newSingleThreadScheduledExecutor(
+          Thread.ofVirtual().name("plot-printer-", 0).factory());
       executor.scheduleAtFixedRate(this::command, delayMillis, delayMillis, TimeUnit.MILLISECONDS);
     }
 
@@ -78,8 +80,8 @@ public interface PlotLogger {
       appendPercent(sb, plot.weed(), "Weed").append(" | ");
       appendPercent(sb, plot.quality(), "Quality").append(" | ");
       appendPercent(sb, plot.harvest(), "Harvest").append(" | ");
-      sb.append("Unique crops: (").append(plot.distinct()).append('|')
-          .append(percent(plot.distinct(), Crop.len())).append("%)").append('\n');
+      sb.append("Unique crops: (").append(plot.unique()).append('|')
+          .append(percent(plot.unique(), Crop.len())).append("%)").append('\n');
 
       sb.append("Buff efficiency: ").append(String.format("%2.5f", plot.efficiency()))
           .append(" | ");
@@ -102,6 +104,7 @@ public interface PlotLogger {
       return 100 * count / total;
     }
 
+    @PreDestroy
     @Override
     public void close() {
       executor.close();

@@ -8,6 +8,7 @@ import io.nuevedejun.gadantic.Iterables.Grid;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import io.nuevedejun.gadantic.PlotPhenotype.Perk;
 import io.quarkus.logging.Log;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -71,12 +72,8 @@ public interface PlotDecoder {
 
   Plot decode(final Genotype<IntegerGene> genotype);
 
-  static Impl create() {
-    return new Impl();
-  }
-
+  @ApplicationScoped
   class Impl implements PlotDecoder {
-    private Impl() {}
 
     @Override
     public Plot decode(final Genotype<IntegerGene> genotype) {

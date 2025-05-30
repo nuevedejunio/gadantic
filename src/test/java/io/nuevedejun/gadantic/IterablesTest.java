@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class IterablesTest {
 
-  private final Iterables.Shuffler shuffler = Iterables.Shuffler.create();
+  private final Iterables.Shuffler shuffler = new Iterables.Shuffler.Impl();
 
   @Test
   void testShuffle() {

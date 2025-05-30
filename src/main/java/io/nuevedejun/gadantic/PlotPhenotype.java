@@ -3,6 +3,9 @@ package io.nuevedejun.gadantic;
 import io.jenetics.Genotype;
 import io.jenetics.IntegerChromosome;
 import io.jenetics.IntegerGene;
+import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefault;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.HARVEST;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
@@ -43,30 +46,43 @@ public interface PlotPhenotype {
   enum Perk {WATER, WEED, QUALITY, HARVEST}
 
 
-  record FitnessCoefficients(
-      double water, double weed, double quality, double harvest,
-      double distinct, double efficiency) {
+  @ConfigMapping(prefix = "fitness")
+  interface FitnessCoefficients {
+    @WithDefault("1.0")
+    double waterRetention();
+
+    @WithDefault("1.0")
+    double weedPrevention();
+
+    @WithDefault("1.0")
+    double qualityBoost();
+
+    @WithDefault("1.0")
+    double harvestIncrease();
+
+    @WithDefault("1.0")
+    double uniqueCrops();
+
+    @WithDefault("1.0")
+    double buffEfficiency();
   }
 
-  static Impl create(final PlotDecoder plotDecoder,
-      final FitnessCoefficients coefficients) {
-    return new Impl(plotDecoder, coefficients);
-  }
 
+  @ApplicationScoped
   class Impl implements PlotPhenotype {
     private final PlotDecoder plotDecoder;
     private final FitnessCoefficients coefficients;
     private final double normalize;
 
-    private Impl(final PlotDecoder plotDecoder, final FitnessCoefficients coefficients) {
+    Impl(final PlotDecoder plotDecoder, final FitnessCoefficients coefficients) {
       this.plotDecoder = plotDecoder;
       this.coefficients = coefficients;
-      this.normalize = coefficients.water()
-          + coefficients.weed()
-          + coefficients.quality()
-          + coefficients.harvest()
-          + coefficients.distinct()
-          + coefficients.efficiency();
+      this.normalize = coefficients.waterRetention()
+          + coefficients.weedPrevention()
+          + coefficients.qualityBoost()
+          + coefficients.harvestIncrease()
+          + coefficients.uniqueCrops()
+          + coefficients.buffEfficiency();
     }
 
     @Override
@@ -77,12 +93,12 @@ public interface PlotPhenotype {
     @Override
     public double fitness(final Genotype<IntegerGene> genotype) {
       final Plot plot = plotDecoder.decode(genotype);
-      return (coefficients.water() * plot.water() / 81
-          + coefficients.weed() * plot.weed() / 81
-          + coefficients.quality() * plot.quality() / 81
-          + coefficients.harvest() * plot.harvest() / 81
-          + coefficients.distinct() * plot.distinct() / Crop.len()
-          + coefficients.efficiency() * plot.efficiency()) / normalize;
+      return (coefficients.waterRetention() * plot.water() / 81
+          + coefficients.weedPrevention() * plot.weed() / 81
+          + coefficients.qualityBoost() * plot.quality() / 81
+          + coefficients.harvestIncrease() * plot.harvest() / 81
+          + coefficients.uniqueCrops() * plot.unique() / Crop.len()
+          + coefficients.buffEfficiency() * plot.efficiency()) / normalize;
     }
   }
 }

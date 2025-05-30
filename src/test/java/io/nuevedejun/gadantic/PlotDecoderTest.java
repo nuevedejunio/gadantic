@@ -34,7 +34,7 @@ import static org.junit.jupiter.params.provider.Arguments.argumentSet;
 
 class PlotDecoderTest {
 
-  final PlotDecoder decoder = PlotDecoder.create();
+  final PlotDecoder decoder = new PlotDecoder.Impl();
 
   static List<Arguments> decodeTestCases() {
     final int[] fewCropsArray = {
@@ -85,7 +85,7 @@ class PlotDecoderTest {
         new Cell<>(0, 6, APPLES), new Cell<>(3, 6, APPLES), new Cell<>(6, 6, APPLES));
 
     return List.of(
-        argumentSet("Few distinct crops; 100% quality ;)",
+        argumentSet("Few unique crops; 100% quality ;)",
             fewCropsArray, fewCropsSet, 0, 17, 81, 36, 4, 0.632353,
             "https://palia-garden-planner.vercel.app/?layout=v0.4_D-111-111-111_CR-AAAAAAAAA-CoPmPmCoPmPmOCoCo-AAAAAAAAA-PmPmCoPmPmCoCoCoO-AAAAAAAAA-OCoCoCoPmPmCoPmPm-AAAAAAAAA-CoCoOPmPmCoPmPmCo-AAAAAAAAA"),
         argumentSet("All crops; varied measurements",
@@ -111,7 +111,7 @@ class PlotDecoderTest {
     assertEquals(expectedWeed, result.weed());
     assertEquals(expectedQuality, result.quality());
     assertEquals(expectedHarvest, result.harvest());
-    assertEquals(expectedDistinct, result.distinct());
+    assertEquals(expectedDistinct, result.unique());
     assertTrue(Math.abs(expectedEfficiency - result.efficiency()) < 1e-5);
     assertEquals(expectedUrl, result.layoutUrl());
   }

@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.toUnmodifiableMap;
 
 public record Plot(
     Set<RichCrop> crops,
-    int water, int weed, int quality, int harvest, int distinct, double efficiency,
+    int water, int weed, int quality, int harvest, int unique, double efficiency,
     String layoutUrl) {
 
   private static final int CELL_WIDTH = 11;

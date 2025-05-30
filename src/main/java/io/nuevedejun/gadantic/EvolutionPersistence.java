@@ -12,9 +12,12 @@ import io.jenetics.engine.EvolutionStart;
 import io.jenetics.util.ISeq;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import io.quarkus.logging.Log;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.fury.Fury;
 import org.apache.fury.config.Language;
 import org.apache.fury.io.FuryInputStream;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -31,15 +34,11 @@ import static io.nuevedejun.gadantic.Iterables.arr;
 
 public interface EvolutionPersistence {
 
-  static File file(final Path file,
-      final Selector<IntegerGene, Double> selector, final int count) {
-    return new File(file, selector, count);
-  }
-
   EvolutionStart<IntegerGene, Double> read();
 
   void write(EvolutionResult<IntegerGene, Double> individuals);
 
+  @ApplicationScoped
   class File implements EvolutionPersistence, AutoCloseable {
     private static final int OUTPUT_BUFFER_SIZE = 65536;
 
@@ -58,20 +57,25 @@ public interface EvolutionPersistence {
     private final Selector<IntegerGene, Double> selector;
     private final int count;
     private final Fury fury;
+    private final ExecutorService executor;
 
-    // guarantee sequential access to the file
-    private final ExecutorService executor = Executors.newSingleThreadExecutor(
-        Thread.ofVirtual().name("evolution-persistence-", 0).factory());
-
-    private File(final Path file, final Selector<IntegerGene, Double> selector, final int count) {
+    File(
+        @ConfigProperty(name = "save-file", defaultValue = "gadantic.sav") final Path file,
+        final Selector<IntegerGene, Double> selector,
+        @ConfigProperty(name = "saved-individual-count", defaultValue = "20") final int count) {
       this.file = file;
       this.selector = selector;
       this.count = count;
+
       this.fury = Fury.builder().withLanguage(Language.JAVA)
           .requireClassRegistration(true)
           .build();
       fury.register(Population.class);
       fury.register(Individual.class);
+
+      // guarantee sequential access to the file
+      this.executor = Executors.newSingleThreadExecutor(
+          Thread.ofVirtual().name("evolution-persistence-", 0).factory());
     }
 
     @Override
@@ -134,6 +138,7 @@ public interface EvolutionPersistence {
       return Phenotype.of(genotype, individual.generation());
     }
 
+    @PreDestroy
     @Override
     public void close() {
       executor.close();

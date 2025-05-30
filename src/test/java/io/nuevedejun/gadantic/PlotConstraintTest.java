@@ -24,7 +24,7 @@ class PlotConstraintTest {
 
   final PrioritizedShuffler iterableFactory = new PrioritizedShuffler();
 
-  final PlotConstraint constraint = PlotConstraint.create(iterableFactory);
+  final PlotConstraint constraint = new PlotConstraint(iterableFactory);
 
   @BeforeAll
   static void setUp() {

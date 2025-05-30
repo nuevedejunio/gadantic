@@ -1,5 +1,7 @@
 package io.nuevedejun.gadantic;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -128,13 +130,8 @@ public final class Iterables {
   public interface Shuffler {
     <T> List<T> shuffle(final Iterable<? extends T> original);
 
-    static Shuffler create() {
-      return new Impl();
-    }
-
+    @ApplicationScoped
     class Impl implements Shuffler {
-      private Impl() {}
-
       @Override
       public <T> List<T> shuffle(final Iterable<? extends T> original) {
         final ArrayList<T> aux = new ArrayList<>();

@@ -1,4 +1,5 @@
 .idea/
+.quinoa/
 .sonarlint/
 .vscode/
 target/

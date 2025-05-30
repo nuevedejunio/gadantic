@@ -9,6 +9,7 @@ import io.nuevedejun.gadantic.Iterables.Cell;
 import io.nuevedejun.gadantic.Iterables.Grid;
 import io.nuevedejun.gadantic.PlotPhenotype.Crop;
 import io.quarkus.logging.Log;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,15 +22,12 @@ import static io.nuevedejun.gadantic.Iterables.coordinates;
 import static io.nuevedejun.gadantic.Iterables.grid;
 import static java.lang.Math.min;
 
+@ApplicationScoped
 public class PlotConstraint implements Constraint<IntegerGene, Double> {
   private final Iterables.Shuffler shuffler;
 
-  private PlotConstraint(final Iterables.Shuffler shuffler) {
+  PlotConstraint(final Iterables.Shuffler shuffler) {
     this.shuffler = shuffler;
-  }
-
-  public static PlotConstraint create(final Iterables.Shuffler shuffler) {
-    return new PlotConstraint(shuffler);
   }
 
   private record Square(int x0, int x1, int y0, int y1, int size) {
