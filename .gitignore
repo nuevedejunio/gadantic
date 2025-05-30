@@ -2,5 +2,7 @@
 .quinoa/
 .sonarlint/
 .vscode/
+config/*
 target/
 gadantic.sav
+!config/list-of.application.properties

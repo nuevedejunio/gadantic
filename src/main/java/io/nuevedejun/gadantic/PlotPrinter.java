@@ -35,7 +35,7 @@ public interface PlotPrinter {
     private final AtomicLong best = new AtomicLong(Double.doubleToRawLongBits(0));
 
     Impl(final PlotDecoder decoder,
-        @ConfigProperty(name = "log-delay-millis", defaultValue = "500") final long delayMillis) {
+        @ConfigProperty(name = "log-delay-millis", defaultValue = "1000") final long delayMillis) {
       this.decoder = decoder;
 
       executor = Executors.newSingleThreadScheduledExecutor(

@@ -62,7 +62,7 @@ public interface EvolutionPersistence {
     File(
         @ConfigProperty(name = "save-file", defaultValue = "gadantic.sav") final Path file,
         final Selector<IntegerGene, Double> selector,
-        @ConfigProperty(name = "saved-individual-count", defaultValue = "20") final int count) {
+        @ConfigProperty(name = "individual-saved-count", defaultValue = "20") final int count) {
       this.file = file;
       this.selector = selector;
       this.count = count;
