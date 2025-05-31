@@ -4,3 +4,17 @@
 *.jar           binary
 mvnw            text eol=lf
 *.cmd           text eol=crlf
+
+*.html          text diff=html
+*.js            text
+*.jsx           text
+*·ts            text
+*·tsx           text
+*.json          text
+*.css           text diff=css
+
+*.jpg           binary
+*.jpeg          binary
+*.png           binary
+*.ico           binary
+*.svg           binary

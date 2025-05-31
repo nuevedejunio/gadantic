@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "jsx": "preserve",
-    "jsxImportSource": "solid-js"
+    "jsxImportSource": "solid-js",
+    "module": "preserve",
+    "moduleResolution": "bundler"
   }
 }
