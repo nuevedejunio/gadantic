@@ -8,16 +8,38 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+/**
+ * Utility class for grid and coordinate operations.
+ */
 public final class Iterables {
 
   private Iterables() {throw new UnsupportedOperationException("do not instantiate");}
 
+  /**
+   * Represents a 2D coordinate.
+   */
   public interface Coordinate {
 
+    /**
+     * Returns the x coordinate.
+     *
+     * @return x value
+     */
     int x();
 
+    /**
+     * Returns the y coordinate.
+     *
+     * @return y value
+     */
     int y();
 
+    /**
+     * Adds another coordinate to this one.
+     *
+     * @param op the coordinate to add
+     * @return new coordinate with summed values
+     */
     default Coordinate plus(final Coordinate op) {
       return new CoordinateImpl(x() + op.x(), y() + op.y());
     }
@@ -28,28 +50,80 @@ public final class Iterables {
   }
 
 
+  /**
+   * Represents a grid cell with coordinates and a value.
+   *
+   * @param <T> the type of value stored in the cell
+   */
   public record Cell<T>(int x, int y, T value) implements Coordinate {
   }
 
 
+  /**
+   * Represents a 2D grid of values.
+   *
+   * @param <T> the type of values stored in the grid
+   */
   public interface Grid<T> extends Iterable<Cell<T>> {
 
+    /**
+     * Returns the grid width.
+     *
+     * @return width in cells
+     */
     int width();
 
+    /**
+     * Returns the grid height.
+     *
+     * @return height in cells
+     */
     int height();
 
+    /**
+     * Gets the value at the specified coordinates.
+     *
+     * @param x the x coordinate
+     * @param y the y coordinate
+     * @return the value at that position
+     */
     T at(int x, int y);
 
+    /**
+     * Gets the value at the specified coordinate.
+     *
+     * @param coordinate the coordinate
+     * @return the value at that position
+     */
     default T at(final Coordinate coordinate) {
       return at(coordinate.x(), coordinate.y());
     }
 
+    /**
+     * Sets the value at the specified coordinates.
+     *
+     * @param x the x coordinate
+     * @param y the y coordinate
+     * @param value the value to set
+     */
     void set(int x, int y, T value);
 
+    /**
+     * Sets the value at the specified coordinate.
+     *
+     * @param coordinate the coordinate
+     * @param value the value to set
+     */
     default void set(final Coordinate coordinate, final T value) {
       set(coordinate.x(), coordinate.y(), value);
     }
 
+    /**
+     * Checks if the coordinate is within grid bounds.
+     *
+     * @param c the coordinate to check
+     * @return true if within bounds
+     */
     default boolean contains(final Coordinate c) {
       return c.x() >= 0 && c.x() < width()
           && c.y() >= 0 && c.y() < height();
@@ -118,16 +192,31 @@ public final class Iterables {
     }
   }
 
+  /**
+   * Creates a grid from a list of values.
+   *
+   * @param <T> the type of values
+   * @param backed the backing list
+   * @param width the grid width
+   * @return a new grid
+   */
   public static <T> Grid<T> grid(final List<T> backed, final int width) {
     return new Grid.Impl<>(backed, width);
   }
 
   /**
-   * Shuffles the elements in a finite iterable. Created this method in an interface to more easily
-   * mock it in unit tests.
+   * Shuffles the elements in a finite iterable.
+   * @implNote I created this method in an interface to more easily mock it in unit tests.
    */
   @FunctionalInterface
   public interface Shuffler {
+    /**
+     * Shuffles the elements of an iterable.
+     *
+     * @param <T> the element type
+     * @param original the iterable to shuffle
+     * @return shuffled list
+     */
     <T> List<T> shuffle(final Iterable<? extends T> original);
 
     @ApplicationScoped
@@ -142,10 +231,26 @@ public final class Iterables {
     }
   }
 
+  /**
+   * Creates an iterable of coordinates from (0,0) to (x,y).
+   *
+   * @param x the x limit (exclusive)
+   * @param y the y limit (exclusive)
+   * @return iterable of coordinates
+   */
   public static Iterable<Coordinate> coordinates(final int x, final int y) {
     return coordinates(0, x, 0, y);
   }
 
+  /**
+   * Creates an iterable of coordinates within specified bounds.
+   *
+   * @param x0 the x start (inclusive)
+   * @param x the x limit (exclusive)
+   * @param y0 the y start (inclusive)
+   * @param y the y limit (exclusive)
+   * @return iterable of coordinates
+   */
   public static Iterable<Coordinate> coordinates(
       final int x0, final int x,
       final int y0, final int y) {

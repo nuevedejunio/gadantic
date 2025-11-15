@@ -26,8 +26,14 @@ import static io.nuevedejun.gadantic.PlotPhenotype.Perk.QUALITY;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
 
+/**
+ * Decodes a genotype into a Plot phenotype with calculated statistics.
+ */
 public interface PlotDecoder {
 
+  /**
+   * Represents a crop instance with position and accumulated perks.
+   */
   class RichCrop {
     final Crop crop;
     final int x;
@@ -48,7 +54,8 @@ public interface PlotDecoder {
     /**
      * Apply this crop's perk to a target crop.
      *
-     * @return {@code true} is the perk was applies; {@code false} otherwise
+     * @param other the target crop to buff
+     * @return {@code true} if the perk was applied; {@code false} otherwise
      */
     private boolean buff(final RichCrop other) {
       if (this.crop != other.crop) {
@@ -60,6 +67,12 @@ public interface PlotDecoder {
       return false;
     }
 
+    /**
+     * Checks if this crop has received enough of a perk to be fully buffed.
+     *
+     * @param perk the perk to check
+     * @return true if perk applications >= crop size
+     */
     public boolean has(final Perk perk) {
       return perks.get(perk) >= crop.size;
     }
@@ -70,6 +83,12 @@ public interface PlotDecoder {
     }
   }
 
+  /**
+   * Decodes a genotype into a Plot with calculated statistics.
+   *
+   * @param genotype the genotype to decode
+   * @return the decoded plot with all metrics calculated
+   */
   Plot decode(final Genotype<IntegerGene> genotype);
 
   @ApplicationScoped
@@ -115,9 +134,13 @@ public interface PlotDecoder {
       }
       final double efficiency = (double) applied / available;
       final int distinct = set.stream().map(r -> r.crop).collect(Collectors.toSet()).size();
+      final double hSymmetry = calculateHorizontalSymmetry(plot);
+      final double vSymmetry = calculateVerticalSymmetry(plot);
+      final double rSymmetry = calculateRotationalSymmetry(plot);
       final String layoutUrl = createLayoutUrl(plot);
       return new Plot(Set.of(set.toArray(new RichCrop[0])),
-          water, weed, quality, harvest, distinct, efficiency, layoutUrl);
+          water, weed, quality, harvest, distinct, efficiency,
+          hSymmetry, vSymmetry, rSymmetry, layoutUrl);
     }
 
     private void fillCropTile(final Grid<RichCrop> plot, final Cell<Crop> cell) {
@@ -158,6 +181,49 @@ public interface PlotDecoder {
       }
 
       return sb.toString();
+    }
+
+    private boolean cropsEquivalent(final Crop a, final Crop b) {
+      return a.perk == b.perk && a.size == b.size;
+    }
+
+    private double calculateHorizontalSymmetry(final Grid<RichCrop> grid) {
+      int matches = 0;
+      for (int y = 0; y < 9; y++) {
+        for (int x = 0; x < 4; x++) {
+          if (cropsEquivalent(grid.at(x, y).crop, grid.at(8 - x, y).crop)) {
+            matches++;
+          }
+        }
+      }
+      final int total = 9 * 4;
+      return (double) matches / total;
+    }
+
+    private double calculateVerticalSymmetry(final Grid<RichCrop> grid) {
+      int matches = 0;
+      for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 9; x++) {
+          if (cropsEquivalent(grid.at(x, y).crop, grid.at(x, 8 - y).crop)) {
+            matches++;
+          }
+        }
+      }
+      final int total = 9 * 4;
+      return (double) matches / total;
+    }
+
+    private double calculateRotationalSymmetry(final Grid<RichCrop> grid) {
+      int matches = 0;
+      for (int y = 0; y < 9; y++) {
+        for (int x = 0; x < 4; x++) {
+          if (cropsEquivalent(grid.at(x, y).crop, grid.at(8 - x, 8 - y).crop)) {
+            matches++;
+          }
+        }
+      }
+      final int total = 9 * 4;
+      return (double) matches / total;
     }
 
     private String mapLayout(final Crop crop) {

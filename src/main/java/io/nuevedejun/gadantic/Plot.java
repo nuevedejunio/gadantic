@@ -18,9 +18,25 @@ import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WATER;
 import static io.nuevedejun.gadantic.PlotPhenotype.Perk.WEED;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 
+/**
+ * Represents a decoded garden plot layout with calculated statistics.
+ *
+ * @param crops set of unique crop instances in the plot
+ * @param water number of tiles with full water perk
+ * @param weed number of tiles with full weed perk
+ * @param quality number of tiles with full quality perk
+ * @param harvest number of tiles with full harvest perk
+ * @param unique number of distinct crop types
+ * @param efficiency ratio of successful buff applications to available slots
+ * @param horizontalSymmetry horizontal symmetry score [0, 1]
+ * @param verticalSymmetry vertical symmetry score [0, 1]
+ * @param rotationalSymmetry rotational symmetry score [0, 1]
+ * @param layoutUrl URL to visualize layout in garden planner
+ */
 public record Plot(
     Set<RichCrop> crops,
     int water, int weed, int quality, int harvest, int unique, double efficiency,
+    double horizontalSymmetry, double verticalSymmetry, double rotationalSymmetry,
     String layoutUrl) {
 
   private static final int CELL_WIDTH = 11;
@@ -32,6 +48,9 @@ public record Plot(
   private static final String HAS_QUALITY = "★";
   private static final String HAS_HARVEST = "⚘";
 
+  /**
+   * Legend symbols for perk visualization.
+   */
   public static final List<String> LEGEND = List.of(
       HAS_WATER + " water",
       HAS_WEED + " weed",
@@ -58,6 +77,11 @@ public record Plot(
     }
   }
 
+  /**
+   * Generates a text-based table representation of the plot.
+   *
+   * @return formatted string showing the plot layout
+   */
   public String tableString() {
     final StringBuilder sb = new StringBuilder();
 

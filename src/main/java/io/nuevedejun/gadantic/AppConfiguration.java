@@ -12,6 +12,9 @@ import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 
+/**
+ * Application configuration that produces CDI beans for the genetic algorithm engine.
+ */
 @ApplicationScoped
 public class AppConfiguration {
 

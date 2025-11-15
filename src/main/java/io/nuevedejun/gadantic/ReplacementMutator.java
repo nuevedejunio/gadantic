@@ -7,7 +7,15 @@ import io.jenetics.MutatorResult;
 
 import java.util.random.RandomGenerator;
 
+/**
+ * Mutator that replaces an entire genotype with a new random instance.
+ */
 public class ReplacementMutator extends Mutator<IntegerGene, Double> {
+  /**
+   * Creates a replacement mutator with the specified probability.
+   *
+   * @param probability the probability of replacement
+   */
   public ReplacementMutator(final double probability) {
     super(probability);
   }

@@ -19,8 +19,14 @@ import java.util.stream.Stream;
 
 import static io.nuevedejun.gadantic.Iterables.arr;
 
+/**
+ * Main application class that orchestrates the genetic algorithm evolution.
+ */
 @QuarkusMain
 public class Gadantic implements QuarkusApplication {
+  /**
+   * Fully qualified class name for logging.
+   */
   public static final String LOG_FQCN = Log.class.getName();
 
   private final GeneticProperties properties;

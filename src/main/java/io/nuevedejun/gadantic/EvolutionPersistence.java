@@ -32,10 +32,23 @@ import java.util.concurrent.Executors;
 import static io.nuevedejun.gadantic.Gadantic.LOG_FQCN;
 import static io.nuevedejun.gadantic.Iterables.arr;
 
+/**
+ * Handles persistence of evolution state between runs.
+ */
 public interface EvolutionPersistence {
 
+  /**
+   * Reads the saved evolution state from storage.
+   *
+   * @return evolution start with saved population or empty if none exists
+   */
   EvolutionStart<IntegerGene, Double> read();
 
+  /**
+   * Writes the current evolution state to storage.
+   *
+   * @param individuals the evolution result to save
+   */
   void write(EvolutionResult<IntegerGene, Double> individuals);
 
   @ApplicationScoped

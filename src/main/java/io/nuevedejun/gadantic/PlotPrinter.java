@@ -19,10 +19,23 @@ import java.util.concurrent.atomic.AtomicReference;
 import static io.nuevedejun.gadantic.Gadantic.LOG_FQCN;
 import static io.nuevedejun.gadantic.Iterables.arr;
 
+/**
+ * Handles printing and logging of plot layouts during evolution.
+ */
 public interface PlotPrinter {
 
+  /**
+   * Accepts an evolution result for potential printing.
+   *
+   * @param result the evolution result
+   */
   void accept(EvolutionResult<IntegerGene, Double> result);
 
+  /**
+   * Prints the details of an individual plot.
+   *
+   * @param individual the individual to print
+   */
   void print(Phenotype<IntegerGene, Double> individual);
 
   @ApplicationScoped
@@ -83,6 +96,10 @@ public interface PlotPrinter {
       sb.append("Unique crops: (").append(plot.unique()).append('|')
           .append(percent(plot.unique(), Crop.len())).append("%)").append('\n');
 
+      appendSymmetry(sb, plot.horizontalSymmetry(), "H-Sym: ").append(" | ");
+      appendSymmetry(sb, plot.verticalSymmetry(), "V-Sym: ").append(" | ");
+      appendSymmetry(sb, plot.rotationalSymmetry(), "R-Sym: ").append('\n');
+
       sb.append("Buff efficiency: ").append(String.format("%2.5f", plot.efficiency()))
           .append(" | ");
       individual.fitnessOptional().ifPresent(fitness ->
@@ -98,6 +115,10 @@ public interface PlotPrinter {
         final String text) {
       return sb.append(text).append(": (").append(count).append('|').append(percent(count, 81))
           .append("%)");
+    }
+
+    private StringBuilder appendSymmetry(final StringBuilder sb, final double value, final String text) {
+      return sb.append(text).append(String.format("%2.2f", value));
     }
 
     private int percent(final int count, final int total) {

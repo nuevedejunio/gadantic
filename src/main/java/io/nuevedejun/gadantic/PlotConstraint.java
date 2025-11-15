@@ -22,6 +22,10 @@ import static io.nuevedejun.gadantic.Iterables.coordinates;
 import static io.nuevedejun.gadantic.Iterables.grid;
 import static java.lang.Math.min;
 
+/**
+ * Constraint that validates and repairs invalid plot layouts.
+ * Ensures crops don't overlap and stay within grid bounds.
+ */
 @ApplicationScoped
 public class PlotConstraint implements Constraint<IntegerGene, Double> {
   private final Iterables.Shuffler shuffler;
