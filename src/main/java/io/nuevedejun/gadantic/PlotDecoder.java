@@ -196,8 +196,8 @@ public interface PlotDecoder {
           }
         }
       }
-      final int total = 9 * 4;
-      return (double) matches / total;
+      final double total = 9.0 * 4;
+      return matches / total;
     }
 
     private double calculateVerticalSymmetry(final Grid<RichCrop> grid) {
@@ -209,8 +209,8 @@ public interface PlotDecoder {
           }
         }
       }
-      final int total = 9 * 4;
-      return (double) matches / total;
+      final double total = 9.0 * 4;
+      return matches / total;
     }
 
     private double calculateRotationalSymmetry(final Grid<RichCrop> grid) {
@@ -222,8 +222,13 @@ public interface PlotDecoder {
           }
         }
       }
-      final int total = 9 * 4;
-      return (double) matches / total;
+      for (int y = 0; y < 4; y++) {
+        if (cropsEquivalent(grid.at(4, y).crop, grid.at(4, 8 - y).crop)) {
+          matches++;
+        }
+      }
+      final double total = 9.0 * 4 + 4;
+      return matches / total;
     }
 
     private String mapLayout(final Crop crop) {
